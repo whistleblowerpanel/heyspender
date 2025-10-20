@@ -325,155 +325,35 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
     const paymentRef = `payment_${Date.now()}_${claim.id}`;
     
     try {
-      // Check if Paystack public key is available
-      const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
-      if (!publicKey) {
-        throw new Error('Paystack configuration missing. Please check your environment variables.');
-      }
-
-      console.log('Paystack public key found:', publicKey.substring(0, 20) + '...');
-
-      // For development/localhost, use hosted payment page due to CORS issues
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        console.log('Development environment detected, using hosted payment page...');
-        useHostedPaymentPage({
-          email: user.email,
-          amount: amount,
-          currency: 'NGN',
-          reference: paymentRef,
-          metadata: {
-            claim_id: claim.id,
-            item_name: item.name,
-            supporter_id: user.id,
-            recipient_id: wishlistOwner.id
-          }
-        });
-        return;
-      }
-
-      // Try to load Paystack script for production
-      const loadPaystackScript = () => {
-        return new Promise((scriptResolve, scriptReject) => {
-          if (window.PaystackPop) {
-            console.log('Paystack script already loaded');
-            scriptResolve();
-            return;
-          }
-
-          console.log('Loading Paystack script...');
-          const script = document.createElement('script');
-          script.src = 'https://js.paystack.co/v1/inline.js';
-          
-          // Add timeout to prevent infinite loading
-          const timeout = setTimeout(() => {
-            scriptReject(new Error('Paystack script loading timeout'));
-          }, 10000);
-
-          script.onload = () => {
-            clearTimeout(timeout);
-            console.log('Paystack script loaded successfully');
-            scriptResolve();
-          };
-          
-          script.onerror = (error) => {
-            clearTimeout(timeout);
-            console.error('Failed to load Paystack script:', error);
-            scriptReject(new Error('Failed to load Paystack script'));
-          };
-          
-          document.head.appendChild(script);
-        });
+      const { initializePaystackPayment: initPayment } = await import('@/lib/paystackService');
+      
+      const paymentData = {
+        email: user.email,
+        amount: amount,
+        currency: 'NGN',
+        reference: paymentRef,
+        metadata: {
+          claim_id: claim.id,
+          item_name: item.name,
+          supporter_id: user.id,
+          recipient_id: wishlistOwner.id
+        },
+        callback: (response) => {
+          console.log('Paystack callback received:', response);
+          handlePaymentSuccess(response, response.reference);
+        },
+        onClose: () => {
+          console.log('Paystack modal closed');
+          handlePaymentCancellation();
+        }
       };
 
-      // Load script and initialize payment
-      loadPaystackScript()
-        .then(() => {
-          initPayment();
-        })
-        .catch((error) => {
-          console.error('Script loading failed:', error);
-          console.log('Falling back to hosted payment page...');
-          useHostedPaymentPage({
-            email: user.email,
-            amount: amount,
-            currency: 'NGN',
-            reference: paymentRef,
-            metadata: {
-              claim_id: claim.id,
-              item_name: item.name,
-              supporter_id: user.id,
-              recipient_id: wishlistOwner.id
-            }
-          });
-        });
-
-      function initPayment() {
-        try {
-          console.log('Setting up Paystack payment...');
-          
-          // Add a small delay to ensure script is fully loaded
-          setTimeout(() => {
-            try {
-              const handler = window.PaystackPop.setup({
-                key: publicKey,
-                email: user.email,
-                amount: amount,
-                currency: 'NGN',
-                ref: paymentRef,
-                metadata: {
-                  claim_id: claim.id,
-                  item_name: item.name,
-                  supporter_id: user.id,
-                  recipient_id: wishlistOwner.id
-                },
-                callback: (response) => {
-                  console.log('Paystack callback received:', response);
-                  handlePaymentSuccess(response, response.reference);
-                },
-                onClose: () => {
-                  console.log('Paystack modal closed');
-                  handlePaymentCancellation();
-                }
-              });
-
-              console.log('Opening Paystack iframe...');
-              handler.openIframe();
-            } catch (error) {
-              console.error('Error in Paystack setup:', error);
-              console.log('Falling back to hosted payment page...');
-              useHostedPaymentPage({
-                email: user.email,
-                amount: amount,
-                currency: 'NGN',
-                reference: paymentRef,
-                metadata: {
-                  claim_id: claim.id,
-                  item_name: item.name,
-                  supporter_id: user.id,
-                  recipient_id: wishlistOwner.id
-                }
-              });
-            }
-          }, 500);
-          
-        } catch (error) {
-          console.error('Error setting up Paystack payment:', error);
-          console.log('Falling back to hosted payment page...');
-          useHostedPaymentPage({
-            email: user.email,
-            amount: amount,
-            currency: 'NGN',
-            reference: paymentRef,
-            metadata: {
-              claim_id: claim.id,
-              item_name: item.name,
-              supporter_id: user.id,
-              recipient_id: wishlistOwner.id
-            }
-          });
-        }
-      }
+      const result = await initPayment(paymentData);
       
+      if (result.error) {
+        console.log('Payment initialization result:', result.error.message);
+        // The service handles fallback automatically
+      }
     } catch (error) {
       console.error('Payment initialization error:', error);
       setIsProcessingPayment(false);

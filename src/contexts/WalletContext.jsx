@@ -13,7 +13,7 @@ export const WalletProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchWalletData = useCallback(async () => {
-    if (!user) {
+    if (!user || !user.id) {
         setWallet(null);
         setTransactions([]);
         setLoading(false);
