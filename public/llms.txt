@@ -1,0 +1,12 @@
+## Pages
+- [-  - HeySpender](/wishlistitem): No description available
+- [- HeySpender](/admindashboard): No description available
+- [Analytics - HeySpender](/analytics): View analytics and insights for your wishlists
+- [Explore Public Wishlists — HeySpender](/publicwishlists): Feeling generous? Browse public wishlists and make someone
+- [Frequently Asked Questions — HeySpender](/faq): Find answers to common questions about HeySpender, wishlists, payments, and more. Get help with creating wishlists, making contributions, and using our platform.
+- [Interactive Cards - HeySpender](/interactivecards): Interactive cards demonstration for HeySpender
+- [Privacy Policy — HeySpender](/privacypolicy): Learn how HeySpender collects, uses, and protects your personal information. Your privacy and data security are our top priorities.
+- [Settings - HeySpender](/settings): Manage your account settings and preferences
+- [Spender List - HeySpender](/spenderlist): Manage items you
+- [Terms of Service — HeySpender](/termsofservice): Read the Terms of Service for using HeySpender
+- [Wallet - HeySpender](/wallet): Manage your wallet, track transactions, and request payouts.

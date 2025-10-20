@@ -1,0 +1,199 @@
+'use client'
+
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
+import { supabase } from '@/lib/customSupabaseClient';
+
+const SupabaseAuthContext = createContext();
+
+export const useAuth = () => {
+  const context = useContext(SupabaseAuthContext);
+  if (!context) {
+    // Return default values if context is not available
+    return {
+      user: null,
+      loading: false,
+      isVerified: true,
+      signInWithEmailPassword: () => Promise.resolve({ error: null }),
+      signUpWithEmailPassword: () => Promise.resolve({ error: null }),
+      signOut: () => Promise.resolve({ error: null }),
+    };
+  }
+  return context;
+};
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false); // Start with false for static export
+  const [isVerified, setIsVerified] = useState(true);
+  const isInitialized = useRef(false);
+  const lastUserRef = useRef(null);
+
+  const updateUser = useCallback((newUser) => {
+    // Only update if the user actually changed
+    if (lastUserRef.current?.id !== newUser?.id) {
+      lastUserRef.current = newUser;
+      setUser(newUser);
+      setLoading(false);
+      
+      // Check if user is verified
+      const userVerified = newUser?.email_confirmed_at !== null;
+      setIsVerified(userVerified);
+      
+      console.log('Auth user updated:', newUser?.id, newUser?.email, 'verified:', userVerified);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isInitialized.current) return;
+    isInitialized.current = true;
+
+    // Skip authentication initialization in static export
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+
+    const getSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.warn("Session error (clearing user):", error.message);
+          updateUser(null);
+        } else {
+          updateUser(session?.user ?? null);
+        }
+      } catch (error) {
+        console.warn("Session error (clearing user):", error);
+        updateUser(null);
+      }
+    };
+
+    getSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('Auth state change:', event, session?.user?.id);
+        // Handle all auth events including token refresh, session expiry, and password recovery
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' || event === 'PASSWORD_RECOVERY') {
+          updateUser(session?.user ?? null);
+        }
+      }
+    );
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, [updateUser]);
+
+  const signUpWithEmailPassword = useCallback((payload) => {
+    return supabase.auth.signUp(payload);
+  }, []);
+
+  // Supports either: (identifier, password) OR ({ email, password })
+  const signInWithEmailPassword = useCallback(async (arg1, arg2) => {
+    // If first arg is an object, assume it's the original credentials shape
+    if (typeof arg1 === 'object' && arg1 !== null) {
+      return supabase.auth.signInWithPassword(arg1);
+    }
+
+    const identifier = String(arg1 || '').trim();
+    const password = String(arg2 || '');
+
+    if (!identifier || !password) {
+      return { error: new Error('Missing credentials') };
+    }
+
+    // If identifier looks like an email, sign in directly
+    if (identifier.includes('@')) {
+      return supabase.auth.signInWithPassword({ email: identifier, password });
+    }
+
+    // Otherwise, treat identifier as username → resolve to email
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('email')
+        .eq('username', identifier)
+        .maybeSingle();
+
+      if (error) {
+        return { error };
+      }
+
+      if (!data?.email) {
+        return { error: new Error('No account found for that username') };
+      }
+
+      return supabase.auth.signInWithPassword({ email: data.email, password });
+    } catch (err) {
+      return { error: err };
+    }
+  }, []);
+  
+  const signOut = useCallback(async () => {
+    try {
+      // Always clear local state first, regardless of server response
+      setUser(null);
+      setLoading(false);
+      
+      // Try to sign out from server, but don't fail if session doesn't exist
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.warn('Sign out server error (but proceeding with local logout):', error.message);
+        // Don't throw error for session_not_found - user is already logged out locally
+        if (error.message?.includes('session_not_found')) {
+          console.log('Session already expired, local logout completed');
+          return { error: null };
+        }
+        // For other errors, still return success since we cleared local state
+        return { error: null };
+      }
+      
+      return { error: null };
+    } catch (error) {
+      console.warn('Sign out error (but proceeding with local logout):', error);
+      // Even if there's an error, we've cleared the local state
+      return { error: null };
+    }
+  }, []);
+
+  const updatePassword = useCallback(async (newPassword) => {
+    return supabase.auth.updateUser({ password: newPassword });
+  }, []);
+
+  const updateEmail = useCallback(async (newEmail) => {
+    return supabase.auth.updateUser({ email: newEmail });
+  }, []);
+
+  const requestPasswordReset = useCallback(async (email, redirectTo) => {
+    return supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectTo || `${window.location.origin}/reset-password`
+    });
+  }, []);
+
+  const resetPassword = useCallback(async (newPassword) => {
+    return supabase.auth.updateUser({ 
+      password: newPassword 
+    });
+  }, []);
+
+  const value = {
+    user,
+    loading,
+    isVerified,
+    signUpWithEmailPassword,
+    signInWithEmailPassword,
+    signOut,
+    updatePassword,
+    updateEmail,
+    requestPasswordReset,
+    resetPassword,
+  };
+
+  return (
+    <SupabaseAuthContext.Provider value={value}>
+      {children}
+    </SupabaseAuthContext.Provider>
+  );
+};

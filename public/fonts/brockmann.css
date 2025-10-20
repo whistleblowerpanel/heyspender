@@ -1,0 +1,23 @@
+/**
+ * Brockmann Font Family
+ * Self-hosted @font-face declarations for maximum mobile compatibility
+ */
+
+@font-face {
+  font-family: 'Brockmann';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./brockmann/brockmann-regular.woff2') format('woff2'),
+       url('./brockmann/brockmann-regular.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Brockmann';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./brockmann/brockmann-bold.woff2') format('woff2'),
+       url('./brockmann/brockmann-bold.woff') format('woff');
+}
+

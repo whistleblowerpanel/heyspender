@@ -1,0 +1,28 @@
+import { createClient } from '@supabase/supabase-js';
+
+// Get Supabase configuration - hardcoded for static export
+const supabaseUrl = 'https://hgvdslcpndmimatvliyu.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhndmRzbGNwbmRtaW1hdHZsaXl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MzA2NjksImV4cCI6MjA3NTAwNjY2OX0.1d-UszrAW-_rUemrmBEbHRoa1r8zOrbo-wtKaXMPW9k';
+
+// Check if we have valid configuration
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing Supabase configuration. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.');
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    multiTab: false,
+    persistSession: true,
+    detectSessionInUrl: true,
+    autoRefreshToken: true,
+    // Mobile-specific settings
+    flowType: 'pkce', // Better for mobile
+    debug: false // Set to true for debugging
+  }
+});
+
+// Test connection and log status
+supabase.from('users').select('count').limit(1).then(
+  () => console.log('✅ Supabase connection successful'),
+  (error) => console.error('❌ Supabase connection failed:', error.message)
+);
