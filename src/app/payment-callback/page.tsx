@@ -149,7 +149,7 @@ const PaymentCallbackForm = () => {
       processPayment();
     } else {
       // Redirect to login if not authenticated
-      router.push('/login');
+      router.push('/auth/login');
     }
   }, [searchParams, user, router]);
 
