@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
+    // Add request timeout protection
+    const controller = new AbortController();
+    const requestTimeout = setTimeout(() => controller.abort(), 25000); // 25 second timeout for entire request
+    
     const { reference } = await request.json();
 
     if (!reference) {
@@ -12,8 +16,8 @@ export async function POST(request) {
     }
 
     // Verify payment with Paystack with timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const paystackController = new AbortController();
+    const timeoutId = setTimeout(() => paystackController.abort(), 10000); // 10 second timeout
 
     const paystackResponse = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
       method: 'GET',
@@ -21,7 +25,7 @@ export async function POST(request) {
         'Authorization': `Bearer ${process.env.NEXT_PUBLIC_PAYSTACK_SECRET_KEY}`,
         'Content-Type': 'application/json',
       },
-      signal: controller.signal
+      signal: paystackController.signal
     });
 
     clearTimeout(timeoutId);
@@ -45,6 +49,9 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
+    // Clear request timeout
+    clearTimeout(requestTimeout);
+    
     return NextResponse.json({
       success: true,
       data: {
@@ -61,6 +68,8 @@ export async function POST(request) {
     });
 
   } catch (error) {
+    // Clear request timeout
+    clearTimeout(requestTimeout);
     console.error('Payment verification error:', error);
     
     // Handle timeout errors specifically

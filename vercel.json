@@ -2,8 +2,15 @@
   "functions": {
     "src/app/api/verify-payment/route.js": {
       "maxDuration": 30
+    },
+    "supabase/functions/process-payment-webhook/index.ts": {
+      "maxDuration": 60
     }
   },
   "regions": ["iad1"],
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm ci",
+  "devCommand": "npm run dev"
 }
