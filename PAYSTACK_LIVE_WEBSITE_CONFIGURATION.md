@@ -568,3 +568,4 @@ CREATE TABLE IF NOT EXISTS notifications (
 7. **Domain Configuration**: Webhook URL must use your production domain
 
 **Follow this guide EXACTLY and your Paystack integration will work on the live website just like it does locally!** 🎉
+

@@ -90,3 +90,4 @@ Once you complete the remaining steps:
 - Check Paystack dashboard for successful transactions
 
 **The integration is 80% complete! Just need the database migration and webhook configuration.** 🚀
+
