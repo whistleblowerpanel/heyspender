@@ -167,9 +167,36 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const requestPasswordReset = useCallback(async (email, redirectTo) => {
-    return supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectTo || `${window.location.origin}/reset-password`
-    });
+    try {
+      console.log('Requesting password reset for:', email);
+      console.log('Redirect URL:', redirectTo || `${window.location.origin}/auth/reset-password`);
+      
+      // First, check if the user exists
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+      
+      if (userError) {
+        console.error('Error checking user:', userError);
+        return { error: { message: 'Unable to verify user account. Please try again.' } };
+      }
+      
+      if (!userData) {
+        return { error: { message: 'No account found with this email address.' } };
+      }
+      
+      const result = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectTo || `${window.location.origin}/auth/reset-password`
+      });
+      
+      console.log('Password reset result:', result);
+      return result;
+    } catch (error) {
+      console.error('Password reset request error:', error);
+      return { error };
+    }
   }, []);
 
   const resetPassword = useCallback(async (newPassword) => {

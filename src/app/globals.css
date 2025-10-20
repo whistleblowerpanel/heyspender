@@ -1,5 +1,4 @@
-/* Import Space Grotesk font - using proper @font-face in space-grotesk.css */
-/* @import url('/fonts/space-grotesk/space-grotesk.css'); */
+/* Space Grotesk font is imported via link tag in layout.tsx */
 
 @import "tailwindcss";
 
@@ -79,6 +78,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
     font-display: swap;
   }
@@ -109,6 +109,78 @@
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
     }
+    
+    /* Mobile-specific font sizes */
+    h1 {
+      font-size: 1.875rem;
+      line-height: 2.25rem;
+      font-weight: 700;
+    }
+    
+    h2 {
+      font-size: 1.5rem;
+      line-height: 2rem;
+      font-weight: 600;
+    }
+    
+    h3 {
+      font-size: 1.25rem;
+      line-height: 1.75rem;
+      font-weight: 600;
+    }
+    
+    p {
+      font-size: 1rem;
+      line-height: 1.5rem;
+    }
+    
+    /* Mobile button text */
+    button {
+      font-size: 1rem;
+      font-weight: 500;
+    }
+    
+    /* Mobile input text */
+    input, textarea, select {
+      font-size: 1rem;
+      line-height: 1.5rem;
+    }
+  }
+
+  /* Tablet optimizations */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    body {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    
+    h1 {
+      font-size: 2.25rem;
+      line-height: 2.5rem;
+    }
+    
+    h2 {
+      font-size: 1.875rem;
+      line-height: 2.25rem;
+    }
+  }
+
+  /* Desktop optimizations */
+  @media (min-width: 1025px) {
+    body {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    
+    h1 {
+      font-size: 3rem;
+      line-height: 1;
+    }
+    
+    h2 {
+      font-size: 2.25rem;
+      line-height: 2.5rem;
+    }
   }
 }
 
@@ -118,6 +190,42 @@
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+  }
+  
+  /* Mobile-specific utility classes */
+  .text-mobile-xs {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+  
+  .text-mobile-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  
+  .text-mobile-base {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+  
+  .text-mobile-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+  
+  .text-mobile-xl {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+  
+  .text-mobile-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+  
+  .text-mobile-3xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
   }
 }
 

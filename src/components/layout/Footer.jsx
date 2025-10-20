@@ -10,7 +10,6 @@ const Footer = () => {
 
   return (
     <footer className="mt-auto bg-brand-purple">
-      {/* Main footer content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-white">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand */}
@@ -28,113 +27,54 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Links: Product */}
-          <div>
+          {/* Product */}
+          <div className="ml-8 lg:ml-12">
             <p className="font-semibold text-white mb-3">Product</p>
             <ul className="space-y-2 text-sm text-white/80">
-              <li>
-                <Link href="/explore" className="hover:text-white transition-colors">
-                  Explore
-                </Link>
-              </li>
-              <li>
-                <Link href="/dashboard" className="hover:text-white transition-colors">
-                  Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link href="/pricing" className="hover:text-white transition-colors">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="hover:text-white transition-colors">
-                  FAQ
-                </Link>
-              </li>
+              <li><Link href="/explore" className="hover:text-white">Explore</Link></li>
+              <li><Link href="/dashboard" className="hover:text-white">Dashboard</Link></li>
+              <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>
+              <li><Link href="/faq" className="hover:text-white">FAQ</Link></li>
             </ul>
           </div>
 
-          {/* Links: Company */}
-          <div>
+          {/* Company */}
+          <div className="ml-8">
             <p className="font-semibold text-white mb-3">Company</p>
             <ul className="space-y-2 text-sm text-white/80">
-              <li>
-                <Link href="/about-us" className="hover:text-white transition-colors">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="hover:text-white transition-colors">
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="hover:text-white transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="hover:text-white transition-colors">
-                  Terms of Service
-                </Link>
-              </li>
+              <li><Link href="/about-us" className="hover:text-white">About Us</Link></li>
+              <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
+              <li><Link href="/privacy-policy" className="hover:text-white">Privacy Policy</Link></li>
+              <li><Link href="/terms-of-service" className="hover:text-white">Terms of Service</Link></li>
             </ul>
           </div>
 
-          {/* Theme Selection */}
-          <div>
+          {/* Theme */}
+          <div className="ml-8">
             <p className="font-semibold text-white mb-3">Theme</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setActiveTheme('system')}
-                className={`w-10 h-10 border-2 border-black shadow-[-2px_2px_0px_#161B47] flex items-center justify-center transition-all duration-200 ${
-                  activeTheme === 'system' ? 'bg-brand-green' : 'bg-white'
-                }`}
-              >
-                <Monitor className={`w-5 h-5 ${activeTheme === 'system' ? 'text-black' : 'text-brand-green'}`} />
+            <div className="flex gap-3">
+              <button className="flex items-center justify-center w-8 h-8 bg-brand-green border-2 border-black shadow-[-2px_2px_0px_#161B47] hover:shadow-[-1px_1px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47] active:brightness-90 transition-all duration-150 text-black">
+                <Monitor className="w-4 h-4" />
               </button>
-              <button
-                onClick={() => setActiveTheme('light')}
-                className={`w-10 h-10 border-2 border-black shadow-[-2px_2px_0px_#161B47] flex items-center justify-center transition-all duration-200 ${
-                  activeTheme === 'light' ? 'bg-brand-green' : 'bg-white'
-                }`}
-              >
-                <Sun className={`w-5 h-5 ${activeTheme === 'light' ? 'text-black' : 'text-brand-green'}`} />
+              <button className="flex items-center justify-center w-8 h-8 border-2 border-black shadow-[-2px_2px_0px_#161B47] hover:shadow-[-1px_1px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47] active:brightness-90 transition-all duration-150 text-white">
+                <Sun className="w-4 h-4" />
               </button>
-              <button
-                onClick={() => setActiveTheme('dark')}
-                className={`w-10 h-10 border-2 border-black shadow-[-2px_2px_0px_#161B47] flex items-center justify-center transition-all duration-200 ${
-                  activeTheme === 'dark' ? 'bg-brand-green' : 'bg-white'
-                }`}
-              >
-                <Moon className={`w-5 h-5 ${activeTheme === 'dark' ? 'text-black' : 'text-brand-green'}`} />
+              <button className="flex items-center justify-center w-8 h-8 border-2 border-black shadow-[-2px_2px_0px_#161B47] hover:shadow-[-1px_1px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47] active:brightness-90 transition-all duration-150 text-white">
+                <Moon className="w-4 h-4" />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Bottom section */}
-        <div className="mt-12 pt-8 border-t border-white/20">
-          <div className="flex flex-col sm:flex-row justify-between items-center">
-            <p className="text-sm text-white/60">
-              © {currentYear} HeySpender. All rights reserved.
-            </p>
-            <div className="mt-4 sm:mt-0 flex items-center space-x-4">
-              <a href="#" className="text-white/60 hover:text-white transition-colors">
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-white/60 hover:text-white transition-colors">
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-white/60 hover:text-white transition-colors">
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-white/60 hover:text-white transition-colors">
-                <Youtube className="w-5 h-5" />
-              </a>
-            </div>
+        {/* Bottom Bar */}
+        <div className="mt-10 pt-6 border-t border-white/20 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4 text-white/80">
+            <a href="#" aria-label="X" className="hover:text-white"><Twitter className="w-4 h-4" /></a>
+            <a href="#" aria-label="Instagram" className="hover:text-white"><Instagram className="w-4 h-4" /></a>
+            <a href="#" aria-label="Facebook" className="hover:text-white"><Facebook className="w-4 h-4" /></a>
+            <a href="#" aria-label="YouTube" className="hover:text-white"><Youtube className="w-4 h-4" /></a>
           </div>
+          <p className="text-sm text-white/70">© {currentYear} HeySpender. All rights reserved.</p>
         </div>
       </div>
     </footer>

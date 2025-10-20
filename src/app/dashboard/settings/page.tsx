@@ -15,7 +15,7 @@ const SettingsPage = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.push('/login');
+      router.push('/auth/login');
     } catch (error) {
       console.error('Error signing out:', error);
       toast({

@@ -296,7 +296,7 @@ const HomePage = () => {
   const [flippedCardIndex, setFlippedCardIndex] = useState(null);
   
   const handleGetStarted = () => {
-    router.push('/register');
+    router.push('/auth/register');
   };
 
   const handleCardClick = (index) => {

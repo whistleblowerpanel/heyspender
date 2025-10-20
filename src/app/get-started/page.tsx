@@ -54,7 +54,7 @@ const GetStartedPage = () => {
   // Redirect if not authenticated
   useEffect(() => {
     if (!user) {
-      router.push('/login');
+      router.push('/auth/login');
     }
   }, [user, router]);
 

@@ -698,7 +698,7 @@ const WishlistItemForm = () => {
               <Button 
                 onClick={() => {
                   setCashModalOpen(false);
-                  router.push('/login');
+                  router.push('/auth/login');
                 }}
                 className="w-full sm:w-auto bg-brand-purple-dark text-white hover:bg-brand-purple-dark/90 text-sm font-semibold h-11 border-2 border-black shadow-[-3px_3px_0px_#161B47] sm:shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47] active:brightness-90"
               >

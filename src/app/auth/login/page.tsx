@@ -15,21 +15,19 @@ import { getUserFriendlyError } from '@/lib/utils';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
-const RegisterPageContent = () => {
+const LoginPageContent = () => {
   const [formData, setFormData] = useState({
-    full_name: '',
-    username: '',
-    email: '',
+    identifier: '',
     password: '',
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { signUpWithEmailPassword } = useAuth();
+  const { signInWithEmailPassword } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   
-  // Get the page the user was trying to access before being redirected to register
+  // Get the page the user was trying to access before being redirected to login
   const returnTo = searchParams.get('returnTo');
 
   const handleInputChange = (e) => {
@@ -37,30 +35,34 @@ const RegisterPageContent = () => {
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
-  const handleSignUp = async (e) => {
+  const handleSignIn = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    const { full_name, username, email, password } = formData;
+    const { identifier, password } = formData;
+    let email = identifier;
 
-    // Check if username is already taken
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('username')
-      .eq('username', username)
-      .single();
+    // Check if identifier is a username and not an email
+    if (!identifier.includes('@')) {
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('email')
+        .eq('username', identifier)
+        .single();
 
-    if (existingUser) {
-      toast({
-        title: "Error",
-        description: "Username is already taken. Please choose another one.",
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
+      if (error || !user) {
+        toast({
+          title: "Error",
+          description: "Invalid username or email",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      email = user.email;
     }
 
-    const { data, error } = await signUpWithEmailPassword(email, password);
+    const { data, error } = await signInWithEmailPassword(email, password);
 
     if (error) {
       toast({
@@ -71,13 +73,23 @@ const RegisterPageContent = () => {
     } else if (data?.user) {
       toast({
         title: "Success",
-        description: "Account created successfully! Please check your email to verify your account.",
+        description: "Welcome back!",
       });
 
-      // Redirect to verification page
-      const verificationUrl = `/auth/verify?email=${encodeURIComponent(email)}${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ''}`;
-      router.push(verificationUrl);
-    }
+      // Check if user has any claims to determine redirect
+      if (data.user.id) {
+        const { count: claimsCount } = await supabase
+            .from('claims')
+            .select('id', { count: 'exact', head: true })
+            .eq('supporter_user_id', data.user.id);
+          
+          if (data.user.identities?.length > 0 && (claimsCount || 0) > 0) {
+            router.push('/dashboard/spender-list');
+          } else {
+            router.push('/dashboard');
+          }
+        }
+      }
     
     setLoading(false);
   };
@@ -92,46 +104,20 @@ const RegisterPageContent = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <form onSubmit={handleSignUp} className="space-y-6">
+            <form onSubmit={handleSignIn} className="space-y-6">
               <div className="text-center">
-                <h1 className="text-3xl font-bold text-brand-purple-dark">Create Account</h1>
-                <p className="text-gray-600">Join HeySpender today!</p>
+                <h1 className="text-3xl font-bold text-brand-purple-dark">Welcome Back</h1>
+                <p className="text-gray-600">Sign in to your account</p>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="full_name">Full Name</Label>
+                  <Label htmlFor="identifier">Email or Username</Label>
                   <Input 
-                    id="full_name" 
+                    id="identifier" 
                     type="text" 
-                    autoComplete="name" 
-                    value={formData.full_name} 
-                    onChange={handleInputChange} 
-                    required 
-                    className="border-2 border-black"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="username">Username</Label>
-                  <Input 
-                    id="username" 
-                    type="text" 
-                    autoComplete="username" 
-                    value={formData.username} 
-                    onChange={handleInputChange} 
-                    required 
-                    className="border-2 border-black"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
                     autoComplete="email" 
-                    value={formData.email} 
+                    value={formData.identifier} 
                     onChange={handleInputChange} 
                     required 
                     className="border-2 border-black"
@@ -139,12 +125,17 @@ const RegisterPageContent = () => {
                 </div>
 
                 <div className="relative">
-                  <Label htmlFor="password">Password</Label>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label htmlFor="password">Password</Label>
+                    <Link href="/auth/forgot-password" className="text-xs text-brand-purple-dark hover:underline">
+                      Forgot Password?
+                    </Link>
+                  </div>
                   <div className="relative">
                     <Input 
                       id="password" 
                       type={showPassword ? 'text' : 'password'} 
-                      autoComplete="new-password" 
+                      autoComplete="current-password" 
                       value={formData.password} 
                       onChange={handleInputChange} 
                       required 
@@ -167,16 +158,16 @@ const RegisterPageContent = () => {
                 type="submit" 
                 disabled={loading} 
                 variant="custom" 
-                className="w-full bg-brand-orange text-black border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]"
+                className="w-full bg-brand-green text-black border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]"
               >
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <span>Register</span>}
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <span>Login</span>}
                 {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
               </Button>
 
               <p className="text-center text-sm text-gray-600">
-                Already have an account?{' '}
-                <Link href="/auth/login" className="font-medium text-brand-purple-dark hover:underline">
-                  Log In
+                Don't have an account?{' '}
+                <Link href="/auth/register" className="font-medium text-brand-purple-dark hover:underline">
+                  Sign Up
                 </Link>
               </p>
             </form>
@@ -188,7 +179,7 @@ const RegisterPageContent = () => {
   );
 };
 
-const RegisterPage = () => {
+const LoginPage = () => {
   return (
     <Suspense fallback={
       <div className="min-h-[80vh] flex items-center justify-center">
@@ -198,9 +189,9 @@ const RegisterPage = () => {
         </div>
       </div>
     }>
-      <RegisterPageContent />
+      <LoginPageContent />
     </Suspense>
   );
 };
 
-export default RegisterPage;
+export default LoginPage;

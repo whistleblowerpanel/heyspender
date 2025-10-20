@@ -184,7 +184,7 @@ const ExplorePage = () => {
                             </h3>
                             
                             <div className="text-sm text-gray-600 mb-3 flex-shrink-0">
-                              By <Link href={`/${wishlist.user.username}`} className="font-bold hover:text-brand-purple-dark transition-colors" onClick={(e) => e.stopPropagation()}>@{wishlist.user.username}</Link>
+                              By <span className="font-bold text-brand-purple-dark">@{wishlist.user.username}</span>
                               {/* Date beside username - only on mobile */}
                               {wishlist.wishlist_date && <span className="md:hidden"> — {format(new Date(wishlist.wishlist_date), "MMM. d, yyyy")}</span>}
                             </div>
@@ -221,7 +221,7 @@ const ExplorePage = () => {
                             </h3>
                             
                             <div className="text-sm text-gray-600 mb-2">
-                              By <Link href={`/${wishlist.user.username}`} className="font-bold hover:text-brand-purple-dark transition-colors" onClick={(e) => e.stopPropagation()}>@{wishlist.user.username}</Link>
+                              By <span className="font-bold text-brand-purple-dark">@{wishlist.user.username}</span>
                               {/* Date beside username - always shown in list view */}
                               {wishlist.wishlist_date && <span> — {format(new Date(wishlist.wishlist_date), "MMM. d, yyyy")}</span>}
                             </div>

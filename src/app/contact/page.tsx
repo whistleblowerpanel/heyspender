@@ -367,7 +367,7 @@ const ContactPage = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
-                  onClick={() => router.push('/register')}
+                  onClick={() => router.push('/auth/register')}
                   size="lg"
                   variant="custom"
                   className="bg-brand-green text-black w-full sm:w-auto cursor-pointer"

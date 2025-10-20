@@ -1,9 +1,6 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import ClientLayout from './ClientLayout'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://heyspender.com'),
@@ -52,12 +49,38 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Preload critical font files for mobile performance */}
+        <link
+          rel="preload"
+          href="/fonts/space-grotesk/space-grotesk-400.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/space-grotesk/space-grotesk-600.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/space-grotesk/space-grotesk-700.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
+        
+        {/* Import font CSS */}
+        <link rel="stylesheet" href="/fonts/space-grotesk.css" />
+        
         <link rel="icon" href="/favicon.webp" type="image/webp" />
         <link rel="icon" href="/favicon.ico" type="image/x-icon" />
         <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/favicon.webp" />
       </head>
-      <body className={inter.className}>
+      <body className="font-space-grotesk">
         <ClientLayout>
           {children}
         </ClientLayout>

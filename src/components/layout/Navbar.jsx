@@ -48,7 +48,7 @@ const Navbar = () => {
       }
       // Small delay to ensure auth state is updated before navigation
       setTimeout(() => {
-        router.push('/login');
+        router.push('/auth/login');
       }, 100);
     } catch (error) {
       // This should rarely happen now with the improved error handling
@@ -128,10 +128,10 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <Button onClick={() => router.push('/login')} variant="custom" className="bg-brand-green text-black cursor-pointer">
+                <Button onClick={() => router.push('/auth/login')} variant="custom" className="bg-brand-green text-black cursor-pointer">
                   <span>Login</span>
                 </Button>
-                <Button onClick={() => router.push('/register')} variant="custom" className="bg-brand-orange text-black cursor-pointer">
+                <Button onClick={() => router.push('/auth/register')} variant="custom" className="bg-brand-orange text-black cursor-pointer">
                   <span>Create Wishlist</span>
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -286,7 +286,7 @@ const Navbar = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.3, type: 'spring', stiffness: 150 }}
                         onClick={() => {
-                          router.push('/login');
+                          router.push('/auth/login');
                           setMobileMenuOpen(false);
                         }}
                         className="w-full py-4 px-6 bg-brand-green hover:bg-brand-green/90 transition-all duration-300 active:scale-[0.98] border-2 border-black group"
@@ -299,7 +299,7 @@ const Navbar = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.35, type: 'spring', stiffness: 150 }}
                         onClick={() => {
-                          router.push('/register');
+                          router.push('/auth/register');
                           setMobileMenuOpen(false);
                         }}
                         className="w-full flex items-center justify-center space-x-2 py-4 px-6 bg-brand-orange hover:bg-brand-orange/90 transition-all duration-300 active:scale-[0.98] border-2 border-black group"
