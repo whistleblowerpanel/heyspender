@@ -2,9 +2,6 @@
   "functions": {
     "src/app/api/verify-payment/route.js": {
       "maxDuration": 30
-    },
-    "supabase/functions/process-payment-webhook/index.ts": {
-      "maxDuration": 60
     }
   },
   "regions": ["iad1"],
