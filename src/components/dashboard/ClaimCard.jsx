@@ -201,11 +201,13 @@ const ClaimCard = ({
               Are you sure you want to remove this claim? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="mt-6">
+            <AlertDialogCancel className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-brand-accent-red hover:bg-brand-accent-red/90 text-white border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
             >
               Remove
             </AlertDialogAction>

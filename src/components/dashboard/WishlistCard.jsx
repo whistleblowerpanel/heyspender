@@ -2,7 +2,6 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { MoreHorizontal, Edit, Eye, Share2, Gift, Plus, Trash2 } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const WishlistCard = ({ 
@@ -11,9 +10,7 @@ const WishlistCard = ({
   onView, 
   onShare, 
   onAddItems,
-  onDelete,
-  isSelected = false,
-  onSelect
+  onDelete
 }) => {
   const visibilityLabel = {
     public: 'Public',
@@ -38,23 +35,10 @@ const WishlistCard = ({
     ? Math.round((wishlist.items_fulfilled_count || 0) / wishlist.items_count * 100)
     : 0;
     
-  // Debug logging for progress bar
-  console.log(`🎯 WishlistCard progress for "${wishlist.title}":`, {
-    items_count: wishlist.items_count,
-    items_fulfilled_count: wishlist.items_fulfilled_count,
-    progress_percentage: progress
-  });
+  // Progress calculation completed
 
   return (
     <div className="bg-white border-2 border-black overflow-hidden hover:shadow-lg transition-shadow relative">
-      {onSelect && (
-        <div className="absolute top-3 left-3 z-10">
-          <Checkbox
-            checked={isSelected}
-            onCheckedChange={(checked) => onSelect(wishlist.id, checked)}
-          />
-        </div>
-      )}
       {/* Cover Image */}
       <div className="h-32 bg-gradient-to-br from-brand-purple-light to-brand-purple-dark relative">
         {wishlist.cover_image_url ? (

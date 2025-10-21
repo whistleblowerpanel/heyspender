@@ -157,24 +157,32 @@ const EditWishlistModal = ({ isOpen, onClose, wishlist, onSave }) => {
               className="mt-2"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="flexible" id="edit-flexible" />
-                <Label htmlFor="edit-flexible">No specific date</Label>
+                <RadioGroupItem 
+                  value="flexible" 
+                  id="edit-flexible"
+                  className="w-4 h-4 border-2 border-black rounded-none data-[state=checked]:bg-brand-purple-dark data-[state=checked]:border-brand-purple-dark [&>span]:hidden"
+                />
+                <Label htmlFor="edit-flexible" className="font-normal cursor-pointer">No specific date</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="specific" id="edit-specific" />
-                <Label htmlFor="edit-specific">Specific date</Label>
+                <RadioGroupItem 
+                  value="specific" 
+                  id="edit-specific"
+                  className="w-4 h-4 border-2 border-black rounded-none data-[state=checked]:bg-brand-purple-dark data-[state=checked]:border-brand-purple-dark [&>span]:hidden"
+                />
+                <Label htmlFor="edit-specific" className="font-normal cursor-pointer">Specific date</Label>
               </div>
             </RadioGroup>
 
             {formData.dateType === 'specific' && (
               <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal mt-2">
+                  <Button variant="outline" className="w-full justify-start text-left font-normal mt-2 border-2 border-black hover:bg-gray-50">
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {formData.specificDate ? format(formData.specificDate, 'PPP') : 'Pick a date'}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 border-2 border-black shadow-lg" align="start">
                   <Calendar
                     mode="single"
                     selected={formData.specificDate}
@@ -183,6 +191,29 @@ const EditWishlistModal = ({ isOpen, onClose, wishlist, onSave }) => {
                       setDatePickerOpen(false); // Close the popover when date is selected
                     }}
                     initialFocus
+                    className="bg-white"
+                    classNames={{
+                      months: 'flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0',
+                      month: 'space-y-4',
+                      caption: 'flex justify-center pt-1 relative items-center',
+                      caption_label: 'text-sm font-medium text-black',
+                      nav: 'space-x-1 flex items-center',
+                      nav_button: 'h-7 w-7 bg-transparent p-0 border-2 border-black hover:bg-gray-100 rounded-none',
+                      nav_button_previous: 'absolute left-1',
+                      nav_button_next: 'absolute right-1',
+                      table: 'w-full border-collapse space-y-1',
+                      head_row: 'flex',
+                      head_cell: 'text-gray-600 rounded-md w-9 font-normal text-[0.8rem]',
+                      row: 'flex w-full mt-2',
+                      cell: 'h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-brand-purple-dark first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20',
+                      day: 'h-9 w-9 p-0 font-normal text-black hover:bg-gray-100 aria-selected:opacity-100 rounded-none border-0',
+                      day_selected: 'bg-brand-purple-dark text-white hover:bg-brand-purple-dark hover:text-white focus:bg-brand-purple-dark focus:text-white',
+                      day_today: 'bg-gray-100 text-black font-semibold',
+                      day_outside: 'text-gray-400 opacity-50',
+                      day_disabled: 'text-gray-400 opacity-50',
+                      day_range_middle: 'aria-selected:bg-brand-purple-dark aria-selected:text-white',
+                      day_hidden: 'invisible',
+                    }}
                   />
                 </PopoverContent>
               </Popover>
@@ -245,9 +276,21 @@ const EditWishlistModal = ({ isOpen, onClose, wishlist, onSave }) => {
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="modal" onClick={onClose} className="bg-white">Cancel</Button>
-          <Button onClick={handleSave} variant="modal" className="bg-brand-orange text-black">
+        <DialogFooter className="mt-6">
+          <Button 
+            variant="outline" 
+            type="button"
+            onClick={onClose}
+            className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="button"
+            variant="custom"
+            onClick={handleSave}
+            className="bg-brand-green text-black border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
+          >
             Save Changes
           </Button>
         </DialogFooter>

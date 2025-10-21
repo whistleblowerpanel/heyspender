@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { getUserFriendlyError } from '@/lib/utils';
+import { wishlistService } from '@/lib/wishlistService';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
@@ -31,6 +32,59 @@ const RegisterPageContent = () => {
   
   // Get the page the user was trying to access before being redirected to register
   const returnTo = searchParams.get('returnTo');
+
+  // Handle wizard data after successful registration
+  const handleWizardData = async (userId) => {
+    try {
+      const wizardDataStr = localStorage.getItem('wizardData');
+      if (!wizardDataStr) return;
+
+      const wizardData = JSON.parse(wizardDataStr);
+      
+      // Get occasion value mapping
+      const occasions = [
+        { name: 'Birthday', value: 'birthday' },
+        { name: 'Wedding', value: 'wedding' },
+        { name: 'Baby Shower', value: 'baby_shower' },
+        { name: 'Graduation', value: 'graduation' },
+        { name: 'Housewarming', value: 'housewarming' },
+        { name: 'Anniversary', value: 'anniversary' },
+        { name: 'Holiday', value: 'holiday' },
+        { name: 'Other', value: 'other' }
+      ];
+      
+      const getOccasionValue = (displayName) => {
+        const occasion = occasions.find(occ => occ.name === displayName);
+        return occasion ? occasion.value : null;
+      };
+
+      const wishlistData = {
+        title: wizardData.title,
+        occasion: getOccasionValue(wizardData.occasion),
+        wishlist_date: wizardData.event_date ? new Date(wizardData.event_date).toISOString() : null,
+        story: wizardData.story,
+        cover_image_url: wizardData.cover_image_url,
+        visibility: wizardData.visibility
+      };
+
+      await wishlistService.createWishlist(userId, wishlistData, wizardData.items || [], wizardData.cashGoals || []);
+      
+      // Clear wizard data from localStorage
+      localStorage.removeItem('wizardData');
+      
+      toast({
+        title: 'Wishlist created successfully!',
+        description: 'Your wishlist has been created and is ready to share.'
+      });
+    } catch (error) {
+      console.error('Error creating wishlist from wizard data:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Wishlist creation failed',
+        description: 'Your account was created, but there was an issue creating your wishlist. You can create one from your dashboard.'
+      });
+    }
+  };
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -69,6 +123,9 @@ const RegisterPageContent = () => {
         variant: "destructive",
       });
     } else if (data?.user) {
+      // Handle wizard data if it exists
+      await handleWizardData(data.user.id);
+      
       toast({
         title: "Success",
         description: "Account created successfully! Please check your email to verify your account.",

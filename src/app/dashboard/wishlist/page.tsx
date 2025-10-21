@@ -76,7 +76,6 @@ const MyWishlistV2Page = () => {
   const [viewMode, setViewMode] = useState('grid');
   
   // Bulk actions state
-  const [selectedWishlists, setSelectedWishlists] = useState([]);
   
   // Wallet balance calculation
   const [payouts, setPayouts] = useState([]);
@@ -566,54 +565,6 @@ const MyWishlistV2Page = () => {
     }
   };
 
-  // Bulk action handlers
-  const handleBulkDelete = async () => {
-    if (selectedWishlists.length === 0) return;
-    
-    try {
-      await Promise.all(
-        selectedWishlists.map(id => wishlistService.deleteWishlist(id))
-      );
-      await fetchDashboardData();
-      setSelectedWishlists([]);
-      toast({
-        title: 'Wishlists deleted',
-        description: `${selectedWishlists.length} wishlist${selectedWishlists.length > 1 ? 's' : ''} deleted successfully.`
-      });
-    } catch (error) {
-      console.error('Error deleting wishlists:', error);
-      toast({ variant: 'destructive', title: 'Unable to delete wishlists', description: JSON.stringify(error) });
-    }
-  };
-
-  const handleBulkShare = () => {
-    if (selectedWishlists.length === 0) return;
-    
-    // For now, just show a message. In a real app, you might want to create a bulk share modal
-    toast({
-      title: 'Bulk sharing',
-      description: `Sharing ${selectedWishlists.length} wishlist${selectedWishlists.length > 1 ? 's' : ''} is not yet implemented.`
-    });
-  };
-
-  const handleBulkStatusChange = async (newStatus) => {
-    if (selectedWishlists.length === 0) return;
-    
-    try {
-      await Promise.all(
-        selectedWishlists.map(id => wishlistService.updateWishlist(id, { status: newStatus }))
-      );
-      await fetchDashboardData();
-      setSelectedWishlists([]);
-      toast({
-        title: 'Status updated',
-        description: `${selectedWishlists.length} wishlist${selectedWishlists.length > 1 ? 's' : ''} status updated to ${newStatus}.`
-      });
-    } catch (error) {
-      console.error('Error updating wishlist status:', error);
-      toast({ variant: 'destructive', title: 'Unable to update status', description: JSON.stringify(error) });
-    }
-  };
 
   const handleViewCashGoal = (goal) => {
     const username = user?.user_metadata?.username;
@@ -1005,14 +956,6 @@ const MyWishlistV2Page = () => {
                                     onShare={() => handleShareWishlist(wishlist)}
                                     onAddItems={() => handleAddItemsToWishlist(wishlist)}
                                     onDelete={() => handleDeleteWishlist(wishlist)}
-                                    isSelected={selectedWishlists.includes(wishlist.id)}
-                                    onSelect={(selected) => {
-                                      if (selected) {
-                                        setSelectedWishlists(prev => [...prev, wishlist.id]);
-                                      } else {
-                                        setSelectedWishlists(prev => prev.filter(id => id !== wishlist.id));
-                                      }
-                                    }}
                                   />
                         ))}
                         <AddCard 

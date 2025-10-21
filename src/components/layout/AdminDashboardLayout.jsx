@@ -1,13 +1,13 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
-import { Users, Gift, DollarSign, ArrowUpDown, Bell, Settings } from 'lucide-react';
+import { Users, Gift, CreditCard, ArrowUpDown, Bell, Settings } from 'lucide-react';
 import BottomNavbar from '@/components/dashboard/BottomNavbar';
+import Navbar from '@/components/layout/Navbar';
 
-const AdminDashboardLayout = () => {
+const AdminDashboardLayout = ({ children }) => {
   const tabs = [
     { value: 'users', label: 'Users', icon: Users, path: '/admin/dashboard/users' },
     { value: 'wishlists', label: 'Wishlists', icon: Gift, path: '/admin/dashboard/wishlists' },
-    { value: 'payouts', label: 'Payouts', icon: DollarSign, path: '/admin/dashboard/payouts' },
+    { value: 'payouts', label: 'Payouts', icon: CreditCard, path: '/admin/dashboard/payouts' },
     { value: 'transactions', label: 'Transactions', icon: ArrowUpDown, path: '/admin/dashboard/transactions' },
     { value: 'notifications', label: 'Notifications', icon: Bell, path: '/admin/dashboard/notifications' },
     { value: 'settings', label: 'Settings', icon: Settings, path: '/admin/dashboard/settings' },
@@ -15,11 +15,11 @@ const AdminDashboardLayout = () => {
 
   return (
     <div>
-      <Outlet />
+      <Navbar />
+      {children}
       <BottomNavbar tabs={tabs} />
     </div>
   );
 };
 
 export default AdminDashboardLayout;
-

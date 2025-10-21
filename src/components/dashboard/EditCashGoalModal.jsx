@@ -173,24 +173,32 @@ const EditCashGoalModal = ({ isOpen, onClose, goal, wishlists, onSave }) => {
               className="mt-2"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="flexible" id="edit-goal-flexible" />
-                <Label htmlFor="edit-goal-flexible">No specific deadline</Label>
+                <RadioGroupItem 
+                  value="flexible" 
+                  id="edit-goal-flexible"
+                  className="w-4 h-4 border-2 border-black rounded-none data-[state=checked]:bg-brand-green data-[state=checked]:border-brand-green [&>span]:hidden"
+                />
+                <Label htmlFor="edit-goal-flexible" className="font-normal cursor-pointer">No specific deadline</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="specific" id="edit-goal-specific" />
-                <Label htmlFor="edit-goal-specific">Specific deadline</Label>
+                <RadioGroupItem 
+                  value="specific" 
+                  id="edit-goal-specific"
+                  className="w-4 h-4 border-2 border-black rounded-none data-[state=checked]:bg-brand-green data-[state=checked]:border-brand-green [&>span]:hidden"
+                />
+                <Label htmlFor="edit-goal-specific" className="font-normal cursor-pointer">Specific deadline</Label>
               </div>
             </RadioGroup>
 
             {formData.deadlineType === 'specific' && (
               <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal mt-2">
+                  <Button variant="outline" className="w-full justify-start text-left font-normal mt-2 border-2 border-black hover:bg-gray-50">
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {formData.deadline ? format(formData.deadline, 'PPP') : 'Pick a deadline'}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 border-2 border-black shadow-lg" align="start">
                   <Calendar
                     mode="single"
                     selected={formData.deadline}
@@ -200,6 +208,29 @@ const EditCashGoalModal = ({ isOpen, onClose, goal, wishlists, onSave }) => {
                     }}
                     initialFocus
                     disabled={(date) => date < new Date()}
+                    className="bg-white"
+                    classNames={{
+                      months: 'flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0',
+                      month: 'space-y-4',
+                      caption: 'flex justify-center pt-1 relative items-center',
+                      caption_label: 'text-sm font-medium text-black',
+                      nav: 'space-x-1 flex items-center',
+                      nav_button: 'h-7 w-7 bg-transparent p-0 border-2 border-black hover:bg-gray-100 rounded-none',
+                      nav_button_previous: 'absolute left-1',
+                      nav_button_next: 'absolute right-1',
+                      table: 'w-full border-collapse space-y-1',
+                      head_row: 'flex',
+                      head_cell: 'text-gray-600 rounded-md w-9 font-normal text-[0.8rem]',
+                      row: 'flex w-full mt-2',
+                      cell: 'h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-brand-green first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20',
+                      day: 'h-9 w-9 p-0 font-normal text-black hover:bg-gray-100 aria-selected:opacity-100 rounded-none border-0',
+                      day_selected: 'bg-brand-green text-white hover:bg-brand-green hover:text-white focus:bg-brand-green focus:text-white',
+                      day_today: 'bg-gray-100 text-black font-semibold',
+                      day_outside: 'text-gray-400 opacity-50',
+                      day_disabled: 'text-gray-400 opacity-50',
+                      day_range_middle: 'aria-selected:bg-brand-green aria-selected:text-white',
+                      day_hidden: 'invisible',
+                    }}
                   />
                 </PopoverContent>
               </Popover>
@@ -207,15 +238,22 @@ const EditCashGoalModal = ({ isOpen, onClose, goal, wishlists, onSave }) => {
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="modal" onClick={onClose} className="bg-white" disabled={loading}>
+        <DialogFooter className="mt-6">
+          <Button 
+            variant="outline" 
+            type="button"
+            onClick={onClose} 
+            disabled={loading}
+            className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
+          >
             Cancel
           </Button>
           <Button 
+            type="button"
+            variant="custom"
             onClick={handleSave} 
-            variant="modal" 
-            className="bg-brand-orange text-black"
             disabled={loading || !formData.title?.trim() || !formData.targetAmount}
+            className="bg-brand-green text-black border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
           >
             {loading ? 'Saving...' : 'Save Changes'}
           </Button>

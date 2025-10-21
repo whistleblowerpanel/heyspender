@@ -17,6 +17,7 @@ export const claimsService = {
             slug,
             user_id,
             occasion,
+            wishlist_date,
             cover_image_url,
             users!inner(
               id,
@@ -46,15 +47,13 @@ export const claimsService = {
       amount_paid: claim.amount_paid || 0
     }));
     
-    console.log(`✅ [claimsService] Fetched ${claims.length} claims from database`);
-    console.log('📊 [claimsService] Fulfilled claims:', claims.filter(c => c.status === 'fulfilled').length);
+    // Claims fetched successfully
     
     return claims;
   },
 
   // Update claim status
   async updateClaimStatus(claimId, status) {
-    console.log('🔧 Updating claim status:', { claimId, status });
     
     // First, get the current claim to see its current status
     const { data: currentClaim, error: fetchError } = await supabase
@@ -263,7 +262,7 @@ export const claimsService = {
       // Don't throw error here since the claim was already modified
       // Just log it for debugging
     } else {
-      console.log(`✅ [claimsService] Wishlist item qty_claimed updated: ${currentQtyClaimed} → ${newQtyClaimed} (removed ${quantityToActuallyRemove} items)`);
+      // Wishlist item quantity updated successfully
     }
 
     return { 

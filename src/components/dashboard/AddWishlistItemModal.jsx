@@ -190,9 +190,23 @@ const AddWishlistItemModal = ({ isOpen, onClose, wishlists, defaultWishlistId, o
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="modal" onClick={onClose} disabled={loading} className="bg-white">Cancel</Button>
-          <Button onClick={handleSave} variant="modal" className="bg-brand-orange text-black" disabled={loading || !isValid}>
+        <DialogFooter className="mt-6">
+          <Button 
+            type="button"
+            variant="outline" 
+            onClick={onClose} 
+            disabled={loading}
+            className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="button"
+            variant="custom"
+            onClick={handleSave} 
+            disabled={loading || !isValid}
+            className="bg-brand-green text-black border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
+          >
             {loading ? 'Creating...' : 'Create Item'}
           </Button>
         </DialogFooter>

@@ -168,21 +168,21 @@ const AddCashGoalModal = ({ isOpen, onClose, wishlists, onSave }) => {
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="mt-6">
             <Button 
               type="button"
-              variant="modal" 
+              variant="outline" 
               onClick={onClose} 
-              disabled={isSubmitting} 
-              className="bg-white"
+              disabled={isSubmitting}
+              className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
             >
               Cancel
             </Button>
             <Button 
-              type="submit"
-              variant="modal" 
-              className="bg-brand-orange text-black"
+              type="submit" 
+              variant="custom" 
               disabled={isSubmitting}
+              className="bg-brand-green text-black border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
             >
               {isSubmitting ? 'Creating...' : 'Create Goal'}
             </Button>

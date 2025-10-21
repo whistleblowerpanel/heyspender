@@ -14,9 +14,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand */}
           <div className="col-span-1 lg:col-span-2">
-            <div className="flex items-center">
+            <Link href="/" className="flex items-center cursor-pointer">
               <img src="/HeySpenderMedia/General/HeySpender Logoo.webp" alt="HeySpender" className="h-18 sm:h-20" />
-            </div>
+            </Link>
             <p className="mt-4 text-sm text-white/80 max-w-sm sm:max-w-md">
               Build thoughtful wishlists, accept contributions securely, and celebrate with the people you love.
             </p>
@@ -51,15 +51,24 @@ const Footer = () => {
 
           {/* Theme */}
           <div className="ml-8">
-            <p className="font-semibold text-white mb-3">Theme</p>
-            <div className="flex gap-3">
-              <button className="flex items-center justify-center w-8 h-8 bg-brand-green border-2 border-black shadow-[-2px_2px_0px_#161B47] hover:shadow-[-1px_1px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47] active:brightness-90 transition-all duration-150 text-black">
+            <p className="font-semibold text-white mb-2 text-sm">THEME</p>
+            <div className="flex items-center gap-2">
+              <button 
+                className={`flex items-center justify-center w-4 h-4 transition-all duration-200 ${activeTheme === 'system' ? 'text-white' : 'text-white/60 hover:text-white'}`}
+                onClick={() => setActiveTheme('system')}
+              >
                 <Monitor className="w-4 h-4" />
               </button>
-              <button className="flex items-center justify-center w-8 h-8 border-2 border-black shadow-[-2px_2px_0px_#161B47] hover:shadow-[-1px_1px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47] active:brightness-90 transition-all duration-150 text-white">
+              <button 
+                className={`flex items-center justify-center w-4 h-4 transition-all duration-200 ${activeTheme === 'light' ? 'text-white' : 'text-white/60 hover:text-white'}`}
+                onClick={() => setActiveTheme('light')}
+              >
                 <Sun className="w-4 h-4" />
               </button>
-              <button className="flex items-center justify-center w-8 h-8 border-2 border-black shadow-[-2px_2px_0px_#161B47] hover:shadow-[-1px_1px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47] active:brightness-90 transition-all duration-150 text-white">
+              <button 
+                className={`flex items-center justify-center w-4 h-4 transition-all duration-200 ${activeTheme === 'dark' ? 'text-white' : 'text-white/60 hover:text-white'}`}
+                onClick={() => setActiveTheme('dark')}
+              >
                 <Moon className="w-4 h-4" />
               </button>
             </div>

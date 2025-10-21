@@ -1,4 +1,5 @@
 import { supabase } from './customSupabaseClient';
+import { supabaseStorageService } from './supabaseStorageService';
 import slugify from 'slugify';
 
 // Wishlist CRUD operations
@@ -62,12 +63,7 @@ export const wishlistService = {
           status: this.getWishlistStatus(wishlist)
         };
         
-        // Debug logging for progress calculation
-        console.log(`📊 Progress calculation for wishlist "${wishlist.title}":`, {
-          items_count: result.items_count,
-          items_fulfilled_count: result.items_fulfilled_count,
-          progress_percentage: result.items_count > 0 ? Math.round((result.items_fulfilled_count / result.items_count) * 100) : 0
-        });
+        // Progress calculation completed
         
         return result;
       })
@@ -440,15 +436,13 @@ export const itemsService = {
   }
 };
 
-// Image upload service - PHP Upload Endpoint
-// Works in both development (Vite plugin) and production (PHP script)
-// Development: /upload.php handled by Vite plugin -> saves to public/HeySpenderMedia/General/
-// Production: /upload.php handled by PHP script -> saves to HeySpenderMedia/General/
+// Image upload service - Supabase Storage
+
 export const imageService = {
   async uploadCoverImage(file, userId) {
     try {
-      console.log('Uploading cover image via /upload.php...');
-      const url = await this.uploadImage(file);
+      console.log('Uploading cover image to Supabase Storage...');
+      const url = await supabaseStorageService.uploadCoverImage(file, userId);
       return url;
     } catch (error) {
       console.error('Error uploading cover image:', error);
@@ -458,8 +452,8 @@ export const imageService = {
 
   async uploadItemImage(file, userId) {
     try {
-      console.log('Uploading item image via /upload.php...');
-      const url = await this.uploadImage(file);
+      console.log('Uploading item image to Supabase Storage...');
+      const url = await supabaseStorageService.uploadItemImage(file, userId);
       return url;
     } catch (error) {
       console.error('Error uploading item image:', error);
@@ -467,38 +461,11 @@ export const imageService = {
     }
   },
 
-  async uploadImage(file) {
+  async uploadImage(file, userId, folder = '') {
     try {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        throw new Error('File must be an image');
-      }
-
-      // Validate file size (max 10MB)
-      const maxSize = 10 * 1024 * 1024;
-      if (file.size > maxSize) {
-        throw new Error('File size must be less than 10MB');
-      }
-
-      // Create form data
-      const formData = new FormData();
-      formData.append('file', file);
-
-      // Upload to /upload.php
-      const response = await fetch('/upload.php', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
-      }
-
-      const result = await response.json();
-      console.log('Upload successful:', result.url);
-      return result.url;
-
+      console.log('Uploading image to Supabase Storage...');
+      const url = await supabaseStorageService.uploadImage(file, userId, folder);
+      return url;
     } catch (error) {
       console.error('Upload error:', error);
       throw error;
@@ -507,10 +474,9 @@ export const imageService = {
 
   async deleteImage(imageUrl) {
     try {
-      // In a static site, we can't delete files from the server
-      // This would require a backend API endpoint
-      console.log('Note: File deletion not implemented for static hosting');
-      return true;
+      console.log('Deleting image from Supabase Storage...');
+      const success = await supabaseStorageService.deleteImage(imageUrl);
+      return success;
     } catch (error) {
       console.error('Error deleting image:', error);
       return false;
@@ -519,8 +485,9 @@ export const imageService = {
 
   async deleteMultipleImages(imageUrls) {
     try {
-      console.log('Note: File deletion not implemented for static hosting');
-      return { success: imageUrls.length, failed: 0 };
+      console.log('Deleting multiple images from Supabase Storage...');
+      const result = await supabaseStorageService.deleteMultipleImages(imageUrls);
+      return result;
     } catch (error) {
       console.error('Error deleting multiple images:', error);
       return { success: 0, failed: imageUrls.length };

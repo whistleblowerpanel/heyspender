@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
@@ -25,7 +27,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-const AdminNotifications = () => {
+const AdminNotifications = ({ onCreateTemplate }) => {
   const { toast } = useToast();
   
   // State
@@ -36,6 +38,13 @@ const AdminNotifications = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
+
+  // Expose create dialog trigger to parent
+  useEffect(() => {
+    if (onCreateTemplate) {
+      onCreateTemplate(() => setShowCreateDialog(true));
+    }
+  }, [onCreateTemplate]);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -66,15 +75,26 @@ const AdminNotifications = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        // If table doesn't exist (PGRST205), just set empty array
+        if (error.code === 'PGRST205' || error.code === '42P01') {
+          console.warn('notification_templates table does not exist yet. Please create it.');
+          setNotifications([]);
+          return;
+        }
+        throw error;
+      }
       setNotifications(data || []);
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to load notifications'
-      });
+      // Don't show error toast if table doesn't exist
+      if (error.code !== 'PGRST205' && error.code !== '42P01') {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to load notifications'
+        });
+      }
     }
   };
 
@@ -100,7 +120,16 @@ const AdminNotifications = () => {
         `)
         .order('scheduled_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        // If table doesn't exist (PGRST205), just set empty array
+        if (error.code === 'PGRST205' || error.code === '42P01') {
+          console.warn('scheduled_reminders table does not exist yet. Please create it.');
+          setReminders([]);
+          setLoading(false);
+          return;
+        }
+        throw error;
+      }
       setReminders(data || []);
     } catch (error) {
       console.error('Error fetching reminders:', error);
@@ -245,55 +274,6 @@ const AdminNotifications = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-brand-purple-dark">Notifications</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Manage email templates and automated reminders
-          </p>
-        </div>
-        <Button
-          onClick={() => setShowCreateDialog(true)}
-          className="bg-brand-orange text-black hover:bg-brand-orange/90"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create Template
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="border-2 border-black p-4 bg-brand-cream">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Templates</p>
-              <p className="text-2xl font-bold">{notifications.length}</p>
-            </div>
-            <Bell className="w-8 h-8 text-brand-purple-dark" />
-          </div>
-        </div>
-        <div className="border-2 border-black p-4 bg-brand-green">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-800">Active Templates</p>
-              <p className="text-2xl font-bold">
-                {notifications.filter(n => n.status === 'active').length}
-              </p>
-            </div>
-            <CheckCircle className="w-8 h-8 text-black" />
-          </div>
-        </div>
-        <div className="border-2 border-black p-4 bg-brand-purple-light">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-brand-purple-dark">Scheduled Reminders</p>
-              <p className="text-2xl font-bold">{reminders.length}</p>
-            </div>
-            <Clock className="w-8 h-8 text-brand-purple-dark" />
-          </div>
-        </div>
-      </div>
-
       {/* Notification Templates Table */}
       <div className="border-2 border-black bg-white">
         <div className="p-4 border-b-2 border-black bg-brand-cream">
@@ -442,7 +422,7 @@ const AdminNotifications = () => {
           resetForm();
         }
       }}>
-        <DialogContent className="max-w-2xl bg-white">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {showEditDialog ? 'Edit Template' : 'Create Notification Template'}
@@ -543,15 +523,25 @@ const AdminNotifications = () => {
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setShowCreateDialog(false);
-              setShowEditDialog(false);
-              resetForm();
-            }}>
+          <DialogFooter className="mt-6">
+            <Button 
+              variant="outline" 
+              type="button"
+              onClick={() => {
+                setShowCreateDialog(false);
+                setShowEditDialog(false);
+                resetForm();
+              }}
+              className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
+            >
               Cancel
             </Button>
-            <Button onClick={showEditDialog ? handleUpdateNotification : handleCreateNotification}>
+            <Button 
+              type="button"
+              variant="custom"
+              onClick={showEditDialog ? handleUpdateNotification : handleCreateNotification}
+              className="bg-brand-green text-black border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
+            >
               {showEditDialog ? 'Update Template' : 'Create Template'}
             </Button>
           </DialogFooter>
@@ -567,11 +557,13 @@ const AdminNotifications = () => {
               Are you sure you want to delete "{selectedNotification?.title}"? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="mt-6">
+            <AlertDialogCancel className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteNotification}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-brand-accent-red text-white border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
             >
               Delete
             </AlertDialogAction>

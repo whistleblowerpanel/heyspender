@@ -48,7 +48,7 @@ const DateInput = React.forwardRef(({
           variant="outline"
           disabled={disabled}
           className={cn(
-            'w-full justify-start text-left font-normal border-2 border-black',
+            'w-full justify-start text-left font-normal border-2 border-black hover:bg-gray-50',
             !value && 'text-muted-foreground',
             className
           )}
@@ -69,7 +69,7 @@ const DateInput = React.forwardRef(({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0 border-2 border-black" align="start">
         <Calendar
           mode="single"
           selected={value}

@@ -70,6 +70,7 @@
 @layer base {
   * {
     border-color: hsl(var(--border));
+    border-radius: 0 !important; /* BRUTALIST DESIGN: Zero border radius everywhere */
   }
   body {
     background-color: hsl(var(--background));
@@ -81,6 +82,15 @@
     -ms-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
     font-display: swap;
+  }
+
+  /* EXACT CSS animations - NO MODIFICATIONS */
+  .animate-stripe {
+    animation: stripe 4s linear infinite;
+  }
+
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
   
   /* Force Space Grotesk on all text elements for mobile */
@@ -192,6 +202,27 @@
     -webkit-text-fill-color: transparent;
   }
   
+  /* BRUTALIST DESIGN: Shadow utilities */
+  .shadow-brutalist {
+    box-shadow: -2px 2px 0px #161B47;
+  }
+  
+  .shadow-brutalist-hover:hover {
+    box-shadow: -4px 4px 0px #161B47;
+  }
+  
+  .shadow-brutalist-active:active {
+    box-shadow: 0px 0px 0px #161B47;
+  }
+  
+  .shadow-brutalist-hard {
+    box-shadow: -4px 4px 0px #161B47;
+  }
+  
+  .shadow-brutalist-extra-hard {
+    box-shadow: -8px 8px 0px #161B47;
+  }
+  
   /* Mobile-specific utility classes */
   .text-mobile-xs {
     font-size: 0.75rem;
@@ -245,6 +276,6 @@
     background-position: 0 0;
   }
   100% {
-    background-position: 200px 0;
+    background-position: 40px 0;
   }
 }

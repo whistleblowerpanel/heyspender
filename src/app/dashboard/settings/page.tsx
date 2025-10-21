@@ -15,7 +15,8 @@ const SettingsPage = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.push('/auth/login');
+      // Redirect to homepage since we're on a dashboard page
+      router.push('/');
     } catch (error) {
       console.error('Error signing out:', error);
       toast({

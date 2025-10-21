@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Gift, ArrowLeft, ExternalLink, DollarSign, Loader2, Image as ImageIcon, CheckCircle, Eye, EyeOff, X, Mail } from 'lucide-react';
+import { Gift, ArrowLeft, ExternalLink, CreditCard, Loader2, Image as ImageIcon, CheckCircle, Eye, EyeOff, X, Mail } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
@@ -51,7 +51,6 @@ const WishlistItemForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [buyModalErrors, setBuyModalErrors] = useState<any>(null);
   const [showVerificationBanner, setShowVerificationBanner] = useState(false);
-  const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [boughtModalOpen, setBoughtModalOpen] = useState(false);
   const [boughtFormData, setBoughtFormData] = useState({ email: '', username: '', password: '', quantity: 1 });
   const [boughtModalLoading, setBoughtModalLoading] = useState(false);
@@ -204,119 +203,78 @@ const WishlistItemForm = () => {
     }
   };
 
-  const handleSendCash = () => {
+  const handleSendCash = async () => {
     if (!user) {
       setCashModalOpen(true);
       return;
     }
     
-    handleCashWithoutAccount();
-  };
-
-  const handleCashWithoutAccount = async () => {
-    setCashModalOpen(false);
-    setPaymentProcessing(true);
+    // For logged-in users, create a claim and redirect to spender-list
+    setActionLoading(true);
 
     try {
-      const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
-      
-      if (!publicKey) {
-        toast({ 
-          variant: 'destructive', 
-          title: 'Configuration Error', 
-          description: 'Payment system is not configured. Please contact support.' 
+      // Create claim with quantity 1 and note indicating it's a cash payment
+      const { data: claimData, error: claimError } = await supabase
+        .from('claims')
+        .insert({
+          wishlist_item_id: item.id,
+          supporter_user_id: user.id,
+          supporter_contact: user.email,
+          status: 'confirmed',
+          note: 'Quantity: 1', // Mark as cash payment with quantity
+          amount_paid: 0, // No payment yet - will be done from spender-list
+          expire_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+        })
+        .select()
+        .single();
+
+      if (claimError) {
+        console.error('Claim error:', claimError);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: getUserFriendlyError(claimError, 'claiming this item'),
         });
-        setPaymentProcessing(false);
+        setActionLoading(false);
         return;
       }
 
-      const reference = `cash_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Load Paystack script
-      const loadPaystackScript = () => {
-        return new Promise((resolve, reject) => {
-          if (window.PaystackPop) {
-            resolve();
-            return;
-          }
+      // Update qty_claimed
+      await supabase
+        .from('wishlist_items')
+        .update({ qty_claimed: (item.qty_claimed || 0) + 1 })
+        .eq('id', item.id);
 
-          const script = document.createElement('script');
-          script.src = 'https://js.paystack.co/v1/inline.js';
-          script.async = true;
-          script.onload = resolve;
-          script.onerror = reject;
-          document.body.appendChild(script);
+      // Create automatic reminder
+      try {
+        await ReminderService.createAutomaticReminder({
+          claimId: claimData.id,
+          spenderEmail: user.email,
+          spenderUsername: user.user_metadata?.username || user.email?.split('@')[0],
+          itemName: item.name,
+          itemPrice: item.unit_price_estimate || 0,
+          quantity: 1
         });
-      };
-
-      await loadPaystackScript();
-
-      const itemPrice = item?.unit_price_estimate || item?.price || 0;
-      const amountInKobo = Math.round(itemPrice * 100);
-
-      if (amountInKobo <= 0) {
-        toast({ 
-          variant: 'destructive', 
-          title: 'Invalid Amount', 
-          description: 'Item price is not set. Please contact the wishlist owner.' 
-        });
-        setPaymentProcessing(false);
-        return;
+        console.log('✅ Automatic reminder created for claim:', claimData.id);
+      } catch (reminderError) {
+        console.error('❌ Error creating automatic reminder:', reminderError);
       }
 
-      const handler = window.PaystackPop.setup({
-        key: publicKey,
-        email: user?.email || 'guest@heyspender.com',
-        amount: amountInKobo,
-        currency: 'NGN',
-        ref: reference,
-        metadata: {
-          custom_fields: [
-            {
-              display_name: 'Item',
-              variable_name: 'item_name',
-              value: item?.name || 'Wishlist Item'
-            },
-            {
-              display_name: 'Wishlist Owner',
-              variable_name: 'wishlist_owner',
-              value: wishlist?.user?.username || username
-            },
-            {
-              display_name: 'Item ID',
-              variable_name: 'item_id',
-              value: item?.id
-            }
-          ]
-        },
-        onClose: () => {
-          setPaymentProcessing(false);
-          toast({ 
-            title: 'Payment Cancelled', 
-            description: 'You closed the payment window.' 
-          });
-        },
-        callback: (response) => {
-          console.log('Payment successful:', response);
-          toast({ 
-            title: 'Payment Successful!', 
-            description: `Thank you for contributing ₦${(amountInKobo / 100).toLocaleString()} to ${item?.name}!` 
-          });
-          setPaymentProcessing(false);
-          // Redirect to spender list
-          router.push('/dashboard/spender-list');
-        }
+      toast({
+        title: 'Item Claimed!',
+        description: `You've claimed "${item.name}". You can now send cash from your Spender List.`,
       });
 
-      handler.openIframe();
-    } catch (error) {
-      console.error('Error initializing payment:', error);
-      toast({ 
-        variant: 'destructive', 
-        title: 'Payment Error', 
-        description: 'Failed to initialize payment. Please try again.' 
+      // Redirect to spender-list
+      router.push('/dashboard/spender-list');
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: getUserFriendlyError(err, 'claiming this item'),
       });
-      setPaymentProcessing(false);
+      setActionLoading(false);
     }
   };
 
@@ -544,26 +502,26 @@ const WishlistItemForm = () => {
                     
                     <Button 
                       onClick={handleSendCash}
-                      disabled={isFullyClaimed || actionLoading || paymentProcessing}
+                      disabled={isFullyClaimed || actionLoading}
                       variant="custom"
                       className="w-full bg-brand-purple-dark text-white hover:bg-brand-purple-dark/90 text-sm py-3 h-auto border-2 border-black shadow-[-3px_3px_0px_#161B47] sm:shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47] active:brightness-90 disabled:bg-gray-300 disabled:text-gray-500"
                     >
-                      {actionLoading || paymentProcessing ? (
+                      {actionLoading ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           Processing...
                         </>
                       ) : (
                         <>
-                          <DollarSign className="w-4 h-4 mr-2" />
-                          Send the Cash
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          Send Cash / Claim
                         </>
                       )}
                     </Button>
                     
                     <Button 
                       onClick={handleBoughtAlready}
-                      disabled={actionLoading || paymentProcessing}
+                      disabled={actionLoading}
                       variant="custom"
                       className="w-full bg-brand-orange text-black hover:bg-brand-orange/90 text-sm py-3 h-auto border-2 border-black shadow-[-3px_3px_0px_#161B47] sm:shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47] active:brightness-90 disabled:bg-gray-300 disabled:text-gray-500"
                     >
@@ -670,10 +628,10 @@ const WishlistItemForm = () => {
           <DialogContent className="max-w-[95vw] sm:max-w-md w-full max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-base sm:text-lg md:text-xl font-bold pr-6">
-                Send Cash for {item?.name}
+                Claim and Send Cash for {item?.name}
               </DialogTitle>
               <DialogDescription className="text-xs sm:text-sm text-gray-600">
-                You need to be logged in to send cash. Please log in or create an account.
+                You need to be logged in to claim this item and send cash. Please log in or create an account to continue.
               </DialogDescription>
             </DialogHeader>
 
@@ -681,6 +639,9 @@ const WishlistItemForm = () => {
               <div className="text-center">
                 <p className="text-sm text-gray-600 mb-4">
                   Amount: ₦{item?.unit_price_estimate ? Number(item.unit_price_estimate).toLocaleString() : 'Price TBD'}
+                </p>
+                <p className="text-xs text-gray-500">
+                  After logging in, you'll claim this item and it will appear in your Spender List where you can send cash.
                 </p>
               </div>
             </div>
@@ -698,7 +659,7 @@ const WishlistItemForm = () => {
               <Button 
                 onClick={() => {
                   setCashModalOpen(false);
-                  router.push('/auth/login');
+                  router.push(`/auth/login?returnTo=${encodeURIComponent(`/${username}/${slug}/${itemId}`)}`);
                 }}
                 className="w-full sm:w-auto bg-brand-purple-dark text-white hover:bg-brand-purple-dark/90 text-sm font-semibold h-11 border-2 border-black shadow-[-3px_3px_0px_#161B47] sm:shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47] active:brightness-90"
               >

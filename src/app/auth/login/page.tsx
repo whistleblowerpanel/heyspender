@@ -76,20 +76,27 @@ const LoginPageContent = () => {
         description: "Welcome back!",
       });
 
-      // Check if user has any claims to determine redirect
-      if (data.user.id) {
-        const { count: claimsCount } = await supabase
-            .from('claims')
-            .select('id', { count: 'exact', head: true })
-            .eq('supporter_user_id', data.user.id);
-          
-          if (data.user.identities?.length > 0 && (claimsCount || 0) > 0) {
-            router.push('/dashboard/spender-list');
-          } else {
-            router.push('/dashboard');
-          }
+      // Check user role from database and redirect accordingly
+      try {
+        const { data: userData, error: roleError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+        
+        if (!roleError && userData?.role === 'admin') {
+          // Redirect admin users to admin dashboard
+          router.push('/admin/dashboard/users');
+        } else {
+          // Redirect regular users to wishlist dashboard
+          router.push('/dashboard/wishlist/');
         }
+      } catch (roleCheckError) {
+        console.warn('Error checking user role, defaulting to user dashboard:', roleCheckError);
+        // Default to user dashboard if role check fails
+        router.push('/dashboard/wishlist/');
       }
+    }
     
     setLoading(false);
   };

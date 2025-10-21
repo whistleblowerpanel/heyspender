@@ -107,16 +107,14 @@ const AboutUsPage = () => {
                 </Button>
               </div>
 
-              {/* Image Placeholder */}
+              {/* Hero Image */}
               <div className="mt-12 mb-8">
-                <div className="w-full h-[300px] sm:h-[400px] md:h-[500px] bg-gray-100 flex items-center justify-center">
-                  <div className="text-center text-gray-500">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 flex items-center justify-center">
-                      <Heart className="w-8 h-8 text-gray-400" />
-                    </div>
-                    <p className="text-lg font-medium">HeySpender Community</p>
-                    <p className="text-sm">Illustration placeholder</p>
-                  </div>
+                <div className="w-full h-[300px] sm:h-[400px] md:h-[500px] relative overflow-hidden">
+                  <img 
+                    src="/HeySpenderMedia/General/BANNER11.webp" 
+                    alt="HeySpender Community" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </div>
 
@@ -225,21 +223,47 @@ const AboutUsPage = () => {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="bg-brand-cream border-2 border-black overflow-hidden cursor-pointer transition-all duration-500 ease-in-out relative h-[400px] w-full"
                 >
-                  {/* Image Placeholder */}
-                  <div className="w-full h-32 bg-gray-200 border-b-2 border-black flex items-center justify-center">
-                    <div className="text-gray-500 text-sm font-medium">
-                      Image Placeholder
-                    </div>
+                  {/* Image */}
+                  <div className="w-full h-52 bg-gray-200 border-b-2 border-black flex items-center justify-center overflow-hidden">
+                    {index === 0 ? (
+                      <img 
+                        src="/HeySpenderMedia/General/BANNER4.webp" 
+                        alt={value.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : index === 1 ? (
+                      <img 
+                        src="/HeySpenderMedia/General/BANNER7.webp" 
+                        alt={value.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : index === 2 ? (
+                      <img 
+                        src="/HeySpenderMedia/General/BANNER1.webp" 
+                        alt={value.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : index === 3 ? (
+                      <img 
+                        src="/HeySpenderMedia/General/BANNER8.webp" 
+                        alt={value.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-gray-500 text-sm font-medium">
+                        Image Placeholder
+                      </div>
+                    )}
                   </div>
                   
-                  <div className="px-4 py-4 sm:px-6 sm:py-5">
-                    <p className="text-xs font-semibold text-brand-purple uppercase tracking-wider mb-2">
+                  <div className="px-4 py-3 sm:px-6 sm:py-4">
+                    <p className="text-xs font-semibold text-brand-purple uppercase tracking-wider mb-1">
                       {value.tag}
                     </p>
-                    <h3 className="text-[22px] font-bold text-black mb-3">
+                    <h3 className="text-[20px] font-bold text-black mb-2">
                       {value.title}
                     </h3>
-                    <p className="text-black/70 text-[15px] leading-relaxed">
+                    <p className="text-black/70 text-[14px] leading-snug">
                       {value.description}
                     </p>
                   </div>
@@ -392,11 +416,37 @@ const AboutUsPage = () => {
                     }
                   }}
                 >
-                  {/* Image Placeholder */}
-                  <div className="w-full h-48 lg:h-56 bg-gray-200 border-b-2 border-black flex items-center justify-center">
-                    <div className="text-gray-500 text-sm font-medium">
-                      Image Placeholder
-                    </div>
+                  {/* Image */}
+                  <div className="w-full h-48 lg:h-56 bg-gray-200 border-b-2 border-black flex items-center justify-center overflow-hidden">
+                    {index === 0 ? (
+                      <img 
+                        src="/HeySpenderMedia/General/BANNER4.webp" 
+                        alt={value.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : index === 1 ? (
+                      <img 
+                        src="/HeySpenderMedia/General/BANNER7.webp" 
+                        alt={value.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : index === 2 ? (
+                      <img 
+                        src="/HeySpenderMedia/General/BANNER1.webp" 
+                        alt={value.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : index === 3 ? (
+                      <img 
+                        src="/HeySpenderMedia/General/BANNER8.webp" 
+                        alt={value.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-gray-500 text-sm font-medium">
+                        Image Placeholder
+                      </div>
+                    )}
                   </div>
                   
                   <div className="px-8 py-6 lg:px-10 lg:py-8">
@@ -510,41 +560,49 @@ const AboutUsPage = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 px-4 sm:px-6 lg:px-8 bg-brand-purple">
-          <div className="max-w-4xl mx-auto text-center text-white">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                Ready to Start Your Journey?
-              </h2>
-              <p className="text-lg text-white/80 mb-8">
-                Join thousands of people who are already making their dreams come true with HeySpender.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                 <Button 
-                   onClick={() => router.push('/auth/register')} 
-                   size="lg" 
-                   variant="custom"
-                   className="bg-brand-orange text-black w-full sm:w-auto cursor-pointer"
-                 >
-                  <span>Create Your Wishlist</span>
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-                <Button 
-                  onClick={() => router.push('/explore')} 
-                  size="lg" 
-                  variant="custom"
-                  className="bg-brand-green text-black w-full sm:w-auto cursor-pointer"
-                >
-                  <span>Explore Wishlists</span>
-                </Button>
-              </div>
-            </motion.div>
+        <section className="relative pt-20 pb-32 px-4 sm:px-6 lg:px-8 bg-brand-pink-light overflow-hidden">
+          {/* Background Wave Image */}
+          <div className="absolute bottom-0 left-0 w-full h-full">
+            <img 
+              src="/HeySpenderMedia/General/FooterWave.webp" 
+              alt="Footer Wave" 
+              className="absolute bottom-0 left-0 w-full h-24 sm:h-auto object-cover"
+            />
           </div>
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="relative z-10 max-w-4xl mx-auto text-center"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-black mb-4">
+              Ready to Start Your Journey?
+            </h2>
+            <p className="text-lg text-gray-600 mb-8">
+              Join thousands of people who are already making their dreams come true with HeySpender.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+               <Button 
+                 onClick={() => router.push('/auth/register')} 
+                 size="lg" 
+                 variant="custom"
+                 className="bg-brand-accent-red text-white w-full sm:w-auto cursor-pointer"
+               >
+                <span>Create Your Wishlist</span>
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+              <Button 
+                onClick={() => router.push('/explore')} 
+                size="lg" 
+                variant="custom"
+                className="bg-brand-green text-black w-full sm:w-auto cursor-pointer"
+              >
+                <span>Explore Wishlists</span>
+              </Button>
+            </div>
+          </motion.div>
         </section>
       </div>
       <Footer />

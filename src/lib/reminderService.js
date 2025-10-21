@@ -8,46 +8,39 @@ export class ReminderService {
   // Create automatic reminder when a claim is made
   static async createAutomaticReminder({ claimId, spenderEmail, spenderUsername, itemName, itemPrice, quantity = 1 }) {
     try {
-      console.log('🔔 [ReminderService] Creating automatic reminder for claim:', claimId);
-      console.log('🔔 [ReminderService] Input data:', {
-        claimId,
-        spenderEmail,
-        spenderUsername,
-        itemName,
-        itemPrice,
-        quantity
-      });
-
       // Calculate the first reminder date (2 days from now)
       const firstReminderDate = new Date();
       firstReminderDate.setDate(firstReminderDate.getDate() + 2);
-      console.log('🔔 [ReminderService] First reminder date:', firstReminderDate.toISOString());
 
-      // Create reminder record in database
+      // Get the spender's user_id from the claim
+      const { data: claimData, error: claimError } = await supabase
+        .from('claims')
+        .select('supporter_user_id, wishlist_item_id')
+        .eq('id', claimId)
+        .single();
+
+      if (claimError || !claimData) {
+        console.error('Error fetching claim data:', claimError);
+        return { success: false, error: 'Failed to fetch claim data' };
+      }
+
+      // Create reminder record in scheduled_reminders table
       const reminderInsertData = {
         claim_id: claimId,
-        contact: spenderEmail,
-        schedule_at: firstReminderDate.toISOString(),
-        channel: 'email',
-        status: 'sent'
+        scheduled_at: firstReminderDate.toISOString(),
+        status: 'pending'
       };
       
-      console.log('🔔 [ReminderService] Inserting reminder data:', reminderInsertData);
-      
       const { data: reminderData, error: reminderError } = await supabase
-        .from('reminders')
+        .from('scheduled_reminders')
         .insert(reminderInsertData)
         .select()
         .single();
 
-      console.log('🔔 [ReminderService] Database insert result:', { data: reminderData, error: reminderError });
-
       if (reminderError) {
-        console.error('❌ [ReminderService] Error creating reminder:', reminderError);
+        console.error('Error creating reminder:', reminderError);
         return { success: false, error: reminderError.message };
       }
-
-      console.log('✅ [ReminderService] Automatic reminder created:', reminderData);
 
       // Send initial confirmation email
       try {
@@ -59,15 +52,14 @@ export class ReminderService {
           quantity,
           reminderDate: firstReminderDate
         });
-        console.log('✅ [ReminderService] Confirmation email sent');
       } catch (emailError) {
-        console.error('⚠️ [ReminderService] Error sending confirmation email:', emailError);
+        console.error('Error sending confirmation email:', emailError);
         // Don't fail the whole operation if email fails
       }
 
       return { success: true, data: reminderData };
     } catch (error) {
-      console.error('❌ [ReminderService] Error in createAutomaticReminder:', error);
+      console.error('Error in createAutomaticReminder:', error);
       return { success: false, error: error.message };
     }
   }
@@ -75,18 +67,14 @@ export class ReminderService {
   // Update reminder schedule (called when spender updates their reminder)
   static async updateReminderSchedule({ claimId, newScheduleDate, spenderEmail, spenderUsername, itemName }) {
     try {
-      console.log('🔄 Updating reminder schedule for claim:', claimId);
-
-      // Update existing reminder or create new one
+      // Update existing reminder in scheduled_reminders
       const { data: reminderData, error: reminderError } = await supabase
-        .from('reminders')
-        .upsert({
-          claim_id: claimId,
-          contact: spenderEmail,
-          schedule_at: newScheduleDate.toISOString(),
-          channel: 'email',
-          status: 'sent'
+        .from('scheduled_reminders')
+        .update({
+          scheduled_at: newScheduleDate.toISOString(),
+          status: 'pending'
         })
+        .eq('claim_id', claimId)
         .select()
         .single();
 
@@ -94,8 +82,6 @@ export class ReminderService {
         console.error('Error updating reminder:', reminderError);
         return { success: false, error: reminderError.message };
       }
-
-      console.log('✅ Reminder schedule updated:', reminderData);
 
       // Send update confirmation email
       await this.sendReminderUpdateEmail({
@@ -115,20 +101,17 @@ export class ReminderService {
   // Cancel reminder (when item is fully paid or claim is cancelled)
   static async cancelReminder({ claimId, reason = 'item_fulfilled' }) {
     try {
-      console.log('❌ Cancelling reminder for claim:', claimId, 'Reason:', reason);
-
       const { error } = await supabase
-        .from('reminders')
-        .update({ status: 'failed' })
+        .from('scheduled_reminders')
+        .update({ status: 'cancelled' })
         .eq('claim_id', claimId)
-        .eq('status', 'sent');
+        .eq('status', 'pending');
 
       if (error) {
         console.error('Error cancelling reminder:', error);
         return { success: false, error: error.message };
       }
 
-      console.log('✅ Reminder cancelled successfully');
       return { success: true };
     } catch (error) {
       console.error('Error in cancelReminder:', error);
@@ -139,31 +122,21 @@ export class ReminderService {
   // Get reminder for a specific claim
   static async getReminderForClaim({ claimId }) {
     try {
-      console.log('🔍 [ReminderService] Getting reminder for claim:', claimId);
-      
       const { data, error } = await supabase
-        .from('reminders')
+        .from('scheduled_reminders')
         .select('*')
         .eq('claim_id', claimId)
-        .eq('status', 'sent')
-        .single();
+        .eq('status', 'pending')
+        .maybeSingle(); // Use maybeSingle() instead of single() to avoid 406 errors
 
-      console.log('🔍 [ReminderService] Database query result:', { data, error });
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-        console.error('❌ [ReminderService] Error fetching reminder:', error);
+      if (error) {
+        console.error('Error fetching reminder:', error);
         return { success: false, error: error.message };
-      }
-
-      if (data) {
-        console.log('✅ [ReminderService] Found reminder:', data);
-      } else {
-        console.log('ℹ️ [ReminderService] No reminder found for claim:', claimId);
       }
 
       return { success: true, data: data || null };
     } catch (error) {
-      console.error('❌ [ReminderService] Error in getReminderForClaim:', error);
+      console.error('Error in getReminderForClaim:', error);
       return { success: false, error: error.message };
     }
   }
@@ -264,14 +237,17 @@ export class ReminderService {
       }
     });
 
-    // If email sent successfully, schedule next reminder (2 days from now)
+    // If email sent successfully, schedule next reminder (2 days from now) and increment sent count
     if (result.success) {
       const nextReminderDate = new Date();
       nextReminderDate.setDate(nextReminderDate.getDate() + 2);
 
       await supabase
-        .from('reminders')
-        .update({ schedule_at: nextReminderDate.toISOString() })
+        .from('scheduled_reminders')
+        .update({ 
+          scheduled_at: nextReminderDate.toISOString(),
+          sent_count: supabase.raw('sent_count + 1')
+        })
         .eq('claim_id', claimId)
         .eq('status', 'pending');
     }

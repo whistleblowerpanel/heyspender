@@ -82,6 +82,8 @@ const WishlistPage = ({ wishlist: initialWishlist }) => {
   const [items, setItems] = useState([]);
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 2;
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const wishlistUrl = `${window.location.origin}/${username}/${slug}`;
   const [showConfetti, setShowConfetti] = useState(false);
@@ -96,61 +98,97 @@ const WishlistPage = ({ wishlist: initialWishlist }) => {
   }); // 'grid' or 'list'
 
   const fetchWishlistData = useCallback(async () => {
-    // No full page loader on re-fetch
-    const { data, error } = await supabase
-      .from('wishlists')
-      .select('*, user:users!inner(full_name, username, email, is_active), goals(*, contributions(*))')
-      .eq('slug', slug)
-      .eq('user.username', username)
-      .single();
+    try {
+      setLoading(true);
+      setRetryCount(0); // Reset retry count on fresh fetch
+      
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 10000)
+      );
+      
+      // Fetch wishlist data first
+      const wishlistPromise = supabase
+        .from('wishlists')
+        .select('*, user:users!inner(full_name, username, email, is_active), goals(*, contributions(*))')
+        .eq('slug', slug)
+        .eq('user.username', username)
+        .single();
 
-    if (error || !data) {
-      toast({ variant: 'destructive', title: 'Wishlist not found' });
-      setLoading(false);
-      return;
-    }
-    
-    setWishlist(data);
-    setGoals(data.goals || []);
-    
-    // Update SEO for this wishlist
-    const wishlistUrl = `/${username}/${slug}`;
-    const customSEO = {
-      title: `${data.title} — HeySpender`,
-      description: data.story || `Check out ${data.user?.full_name || 'this user'}'s wishlist for their ${data.occasion || 'special occasion'}!`,
-      image: data.cover_image_url || 'https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp'
-    };
-    updatePageSocialMedia(wishlistUrl, customSEO);
+      const { data, error } = await Promise.race([wishlistPromise, timeoutPromise]);
 
-    // Add timestamp to force fresh data and avoid caching issues
-    const { data: itemsData, error: itemsError } = await supabase
-        .from('wishlist_items')
-        .select(`
-          *,
-          claims (
-            id,
-            supporter_user_id,
-            supporter_contact,
-            status,
-            created_at,
-            amount_paid,
-            supporter_user:users!supporter_user_id (
-              username,
-              full_name
+      if (error || !data) {
+        toast({ variant: 'destructive', title: 'Wishlist not found' });
+        setLoading(false);
+        return;
+      }
+      
+      setWishlist(data);
+      setGoals(data.goals || []);
+      
+      // Update SEO for this wishlist
+      const wishlistUrl = `/${username}/${slug}`;
+      const customSEO = {
+        title: `${data.title} — HeySpender`,
+        description: data.story || `Check out ${data.user?.full_name || 'this user'}'s wishlist for their ${data.occasion || 'special occasion'}!`,
+        image: data.cover_image_url || 'https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp'
+      };
+      updatePageSocialMedia(wishlistUrl, customSEO);
+
+      // Fetch items with optimized query
+      const itemsPromise = supabase
+          .from('wishlist_items')
+          .select(`
+            *,
+            claims (
+              id,
+              supporter_user_id,
+              supporter_contact,
+              status,
+              created_at,
+              amount_paid,
+              supporter_user:users!supporter_user_id (
+                username,
+                full_name
+              )
             )
-          )
-        `)
-        .eq('wishlist_id', data.id)
-        .order('created_at', { ascending: false });
+          `)
+          .eq('wishlist_id', data.id)
+          .order('created_at', { ascending: false })
+          .limit(50); // Limit to prevent slow queries
 
-    if (itemsError) {
-        toast({ variant: 'destructive', title: 'Error fetching items'});
-    } else {
-        setItems(itemsData);
+      const { data: itemsData, error: itemsError } = await Promise.race([itemsPromise, timeoutPromise]);
+
+      if (itemsError) {
+        console.error('Error fetching items:', itemsError);
+        toast({ variant: 'destructive', title: 'Error fetching items', description: itemsError.message });
+        setItems([]);
+      } else {
+        setItems(itemsData || []);
+      }
+    } catch (error) {
+      console.error('Error in fetchWishlistData:', error);
+      if (error.message === 'Request timeout') {
+        if (retryCount < maxRetries) {
+          setRetryCount(prev => prev + 1);
+          toast({ 
+            title: 'Retrying...', 
+            description: `Attempt ${retryCount + 1} of ${maxRetries + 1}` 
+          });
+          // Retry after a short delay
+          setTimeout(() => fetchWishlistData(), 2000);
+          return;
+        } else {
+          toast({ variant: 'destructive', title: 'Loading timeout', description: 'The wishlist is taking too long to load. Please try again.' });
+        }
+      } else {
+        toast({ variant: 'destructive', title: 'Error loading wishlist', description: error.message });
+      }
+      setItems([]);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
-  }, [slug, username, toast]);
+  }, [slug, username, toast, retryCount]);
 
   const celebrate = useMemo(() => {
     // If there are no goals and no items, don't celebrate
@@ -225,10 +263,15 @@ const WishlistPage = ({ wishlist: initialWishlist }) => {
 
   useEffect(() => {
     if (!initialWishlist) {
+      // Always start with loading true when no initial data
       setLoading(true);
       fetchWishlistData();
     } else {
-      setLoading(false);
+      // If we have initial data, set it and fetch items
+      setWishlist(initialWishlist);
+      setGoals(initialWishlist.goals || []);
+      setLoading(true); // Still show loading for items
+      fetchWishlistData();
     }
   }, [fetchWishlistData, initialWishlist]);
 
@@ -548,7 +591,28 @@ const WishlistPage = ({ wishlist: initialWishlist }) => {
                     </div>
                 </div>
                 
-                {items.length > 0 ? (
+                {loading ? (
+                    <div className="space-y-4">
+                        {/* Skeleton loader for items */}
+                        {Array.from({ length: 4 }).map((_, index) => (
+                            <div key={index} className="border-2 border-gray-200 bg-white p-4 animate-pulse">
+                                <div className="flex gap-4">
+                                    <div className="w-20 h-20 bg-gray-300 rounded"></div>
+                                    <div className="flex-1 space-y-2">
+                                        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                                        <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                                        <div className="h-3 bg-gray-300 rounded w-1/4"></div>
+                                    </div>
+                                    <div className="w-24 h-8 bg-gray-300 rounded"></div>
+                                </div>
+                            </div>
+                        ))}
+                        <div className="text-center py-4">
+                            <Loader2 className="mx-auto h-6 w-6 text-brand-purple-dark animate-spin" />
+                            <p className="mt-2 text-sm text-gray-500">Loading wishlist items...</p>
+                        </div>
+                    </div>
+                ) : items.length > 0 ? (
                     <>
                         <div className={viewMode === 'grid' ? 'space-y-4 lg:grid lg:grid-cols-4 lg:gap-6 lg:space-y-0' : 'space-y-4'}>
                             {currentItems.map(item => <ItemCard key={item.id} item={item} onClaimed={fetchWishlistData} username={username} slug={slug} viewMode={viewMode} />)}

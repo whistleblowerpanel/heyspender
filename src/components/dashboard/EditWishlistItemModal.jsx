@@ -206,21 +206,21 @@ const EditWishlistItemModal = ({ isOpen, onClose, item, wishlists, onSave }) => 
             )}
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          <DialogFooter className="mt-6 flex-col sm:flex-row gap-2">
             <Button
               type="button"
-              variant="modal"
+              variant="outline"
               onClick={onClose}
-              className="bg-white w-full sm:w-auto"
               disabled={isSubmitting}
+              className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none w-full sm:w-auto"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              variant="modal"
-              className="bg-brand-orange text-black w-full sm:w-auto"
+              variant="custom"
               disabled={isSubmitting}
+              className="bg-brand-green text-black border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none w-full sm:w-auto"
             >
               {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>

@@ -236,15 +236,20 @@ const AddOccasionModal = ({ isOpen, onClose, onSave }) => {
             </Select>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="modal" onClick={handleClose} className="bg-white">
+          <DialogFooter className="mt-6">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleClose}
+              className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
+            >
               Cancel
             </Button>
             <Button 
               type="submit" 
-              variant="modal" 
-              className="bg-brand-orange text-black"
+              variant="custom" 
               disabled={!formData.title.trim()}
+              className="bg-brand-green text-black border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
             >
               Create Occasion
             </Button>

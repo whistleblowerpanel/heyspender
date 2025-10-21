@@ -200,9 +200,21 @@ const AddItemsModal = ({ isOpen, onClose, wishlist, onSave }) => {
           </Button>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button variant="modal" onClick={onClose} className="bg-white w-full sm:w-auto">Cancel</Button>
-          <Button onClick={handleSave} variant="modal" className="bg-brand-orange text-black w-full sm:w-auto hover:shadow-md transition-shadow">
+        <DialogFooter className="mt-6 flex-col sm:flex-row gap-2">
+          <Button 
+            type="button"
+            variant="outline" 
+            onClick={onClose}
+            className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none w-full sm:w-auto"
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="button"
+            variant="custom"
+            onClick={handleSave}
+            className="bg-brand-green text-black border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none w-full sm:w-auto"
+          >
             Add Items
           </Button>
         </DialogFooter>

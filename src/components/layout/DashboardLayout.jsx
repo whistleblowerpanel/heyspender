@@ -6,7 +6,7 @@ import Navbar from '@/components/layout/Navbar';
 
 const DashboardLayout = ({ children }) => {
   const tabs = [
-    { value: 'wishlists', label: 'Wishlists', icon: Gift, path: '/dashboard/wishlist/' },
+    { value: 'wishlists', label: 'Wishlists', icon: Gift, path: '/dashboard/wishlist' },
     { value: 'spender-list', label: 'Spender List', icon: ShoppingBag, path: '/dashboard/spender-list' },
     { value: 'wallet', label: 'Wallet', icon: Wallet, path: '/dashboard/wallet' },
     { value: 'analytics', label: 'Analytics', icon: BarChart3, path: '/dashboard/analytics' },

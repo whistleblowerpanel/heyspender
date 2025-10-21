@@ -23,22 +23,52 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false); // Start with false for static export
+  const [loading, setLoading] = useState(true); // Start with true to prevent premature redirects
   const [isVerified, setIsVerified] = useState(true);
   const isInitialized = useRef(false);
   const lastUserRef = useRef(null);
 
-  const updateUser = useCallback((newUser) => {
+  const updateUser = useCallback(async (newUser) => {
     // Only update if the user actually changed
     if (lastUserRef.current?.id !== newUser?.id) {
       lastUserRef.current = newUser;
-      setUser(newUser);
-      setLoading(false);
       
       // Check if user is verified
       const userVerified = newUser?.email_confirmed_at !== null;
       setIsVerified(userVerified);
       
+      // Fetch user role from database and merge with auth user
+      if (newUser?.id) {
+        try {
+          const { data: userData, error } = await supabase
+            .from('users')
+            .select('role, full_name, username, phone')
+            .eq('id', newUser.id)
+            .single();
+          
+          if (!error && userData) {
+            // Merge database role and user data with auth user
+            const enhancedUser = {
+              ...newUser,
+              user_metadata: {
+                ...newUser.user_metadata,
+                role: userData.role || 'user',
+                full_name: userData.full_name || newUser.user_metadata?.full_name,
+                username: userData.username || newUser.user_metadata?.username,
+                phone: userData.phone || newUser.user_metadata?.phone
+              }
+            };
+            setUser(enhancedUser);
+            console.log('Auth user updated:', enhancedUser?.id, enhancedUser?.email, 'role:', userData.role, 'verified:', userVerified);
+            return;
+          }
+        } catch (error) {
+          console.warn('Error fetching user role from database:', error);
+        }
+      }
+      
+      // If no additional data or error, just set the user as-is
+      setUser(newUser);
       console.log('Auth user updated:', newUser?.id, newUser?.email, 'verified:', userVerified);
     }
   }, []);
@@ -50,11 +80,13 @@ export const AuthProvider = ({ children }) => {
     // Skip authentication initialization in static export
     if (typeof window === 'undefined') {
       setLoading(false);
+      setUser(null);
       return;
     }
 
     const getSession = async () => {
       try {
+        setLoading(true);
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.warn("Session error (clearing user):", error.message);
@@ -65,6 +97,8 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.warn("Session error (clearing user):", error);
         updateUser(null);
+      } finally {
+        setLoading(false);
       }
     };
 

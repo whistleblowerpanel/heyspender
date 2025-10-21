@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ArrowRight, User, LogOut, LayoutGrid, Sparkles, Loader2, Wallet } from 'lucide-react';
+import { Menu, X, ArrowRight, User, LogOut, LayoutGrid, Sparkles, Loader2, Wallet, Users, Gift, CreditCard, ArrowUpDown, Bell, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -20,7 +20,12 @@ const Navbar = () => {
     signOut
   } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
+  
+  // Check if we're on an admin page
+  const isAdminPage = pathname?.startsWith('/admin');
+  const isAdmin = user?.user_metadata?.role === 'admin';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -46,9 +51,17 @@ const Navbar = () => {
         });
         console.error('Sign out error:', error);
       }
+      
+      // Smart redirect: if on dashboard or admin page, redirect to homepage; otherwise stay on current page
+      const currentPath = window.location.pathname;
+      const isDashboardPage = currentPath.startsWith('/dashboard') || currentPath.startsWith('/admin');
+      
       // Small delay to ensure auth state is updated before navigation
       setTimeout(() => {
-        router.push('/auth/login');
+        if (isDashboardPage) {
+          router.push('/'); // Redirect to homepage if on dashboard or admin
+        }
+        // Otherwise stay on current page (no redirect)
       }, 100);
     } catch (error) {
       // This should rarely happen now with the improved error handling
@@ -97,18 +110,53 @@ const Navbar = () => {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                     <DropdownMenuItem onClick={() => router.push(user.user_metadata?.role === 'admin' ? '/admin/dashboard' : '/dashboard/wishlist/')}>
-                      <LayoutGrid className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/dashboard/wallet')}>
-                      <Wallet className="mr-2 h-4 w-4" />
-                      <span>Wallet</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push(`/${user.user_metadata.username}`)}>
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </DropdownMenuItem>
+                    
+                    {/* Admin pages dropdown */}
+                    {isAdmin && isAdminPage ? (
+                      <>
+                        <DropdownMenuItem onClick={() => router.push('/admin/dashboard/users')}>
+                          <Users className="mr-2 h-4 w-4" />
+                          <span>Users</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push('/admin/dashboard/wishlists')}>
+                          <Gift className="mr-2 h-4 w-4" />
+                          <span>Wishlists</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push('/admin/dashboard/payouts')}>
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          <span>Payouts</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push('/admin/dashboard/transactions')}>
+                          <ArrowUpDown className="mr-2 h-4 w-4" />
+                          <span>Transactions</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push('/admin/dashboard/notifications')}>
+                          <Bell className="mr-2 h-4 w-4" />
+                          <span>Notifications</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push('/admin/dashboard/settings')}>
+                          <Settings className="mr-2 h-4 w-4" />
+                          <span>Settings</span>
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      /* Regular user pages dropdown */
+                      <>
+                        <DropdownMenuItem onClick={() => router.push(isAdmin ? '/admin/dashboard/users' : '/dashboard/wishlist/')}>
+                          <LayoutGrid className="mr-2 h-4 w-4" />
+                          <span>Dashboard</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push('/dashboard/wallet')}>
+                          <Wallet className="mr-2 h-4 w-4" />
+                          <span>Wallet</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/${user.user_metadata.username}`)}>
+                          <User className="mr-2 h-4 w-4" />
+                          <span>Profile</span>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut} disabled={isSigningOut}>
                       {isSigningOut ? (

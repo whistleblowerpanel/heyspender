@@ -17,13 +17,13 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, itemType, itemNam
             {itemType === 'wishlist' && ' All items and contributions will also be deleted.'}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]">
+        <AlertDialogFooter className="mt-6">
+          <AlertDialogCancel className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none">
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="bg-brand-accent-red hover:bg-brand-accent-red/90 text-white border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47] active:brightness-90"
+            className="bg-brand-accent-red hover:bg-brand-accent-red/90 text-white border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none active:brightness-90"
           >
             Delete {itemType}
           </AlertDialogAction>

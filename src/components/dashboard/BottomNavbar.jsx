@@ -8,15 +8,20 @@ const BottomNavbar = ({ tabs }) => {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Determine active tab from current URL
-  const activeTab = tabs.find(tab => pathname === tab.path)?.value || tabs[0].value;
+  // Determine active tab from current URL with better path matching
+  const activeTab = tabs.find(tab => {
+    // Normalize paths by removing trailing slashes for comparison
+    const normalizedPathname = pathname.replace(/\/$/, '');
+    const normalizedTabPath = tab.path.replace(/\/$/, '');
+    return normalizedPathname === normalizedTabPath || normalizedPathname.startsWith(normalizedTabPath + '/');
+  })?.value || tabs[0].value;
+
 
   // Float above safe-area
   const bottomOffsetStyle = { bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' };
 
   // Navigate to tab path
   const handleTabClick = useCallback((tab) => {
-    console.log('Navigating to:', tab.path);
     router.push(tab.path);
   }, [router]);
 
@@ -42,16 +47,19 @@ const BottomNavbar = ({ tabs }) => {
                 className="relative"
                 initial={false}
               >
-                <motion.div
-                  layoutId="segmentedPill"
-                  className={`absolute inset-0 z-0 pointer-events-none ${isActive ? 'bg-brand-green ring-1 ring-[#161B47]/10' : 'bg-transparent'}`}
-                  transition={{ 
-                    type: 'spring', 
-                    stiffness: 400, 
-                    damping: 30,
-                    mass: 0.8
-                  }}
-                />
+                {isActive && (
+                  <motion.div
+                    layoutId="bottom-nav-active-pill"
+                    className="absolute inset-0 z-10 pointer-events-none bg-brand-green ring-1 ring-[#161B47]/10"
+                    transition={{ 
+                      type: 'spring', 
+                      stiffness: 400, 
+                      damping: 30,
+                      mass: 0.8
+                    }}
+                    initial={false}
+                  />
+                )}
 
                 <button
                   onClick={(e) => {
@@ -59,9 +67,9 @@ const BottomNavbar = ({ tabs }) => {
                     e.stopPropagation();
                     handleTabClick(tab);
                   }}
-                  className="relative w-full h-full flex items-center justify-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-3.5 focus:outline-none select-none transition-colors duration-200 cursor-pointer z-10"
+                  className="relative w-full h-full flex items-center justify-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-3.5 focus:outline-none select-none transition-colors duration-200 cursor-pointer z-20"
                 >
-                  <span className="relative z-10 flex items-center justify-center gap-2 sm:gap-3 leading-none">
+                  <span className="relative z-20 flex items-center justify-center gap-2 sm:gap-3 leading-none">
                     <motion.div
                       animate={{ 
                         scale: isActive ? 1.1 : 1,

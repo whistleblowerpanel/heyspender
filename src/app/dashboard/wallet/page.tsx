@@ -61,7 +61,6 @@ const WalletPage = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [payoutModalOpen, setPayoutModalOpen] = useState(false);
   const [bankDetailsModalOpen, setBankDetailsModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const itemsPerPage = 10;
@@ -146,9 +145,6 @@ const WalletPage = () => {
     bankCode: ''
   });
 
-  // Payout request state
-  const [payoutAmount, setPayoutAmount] = useState('');
-  const [payoutAmountFormatted, setPayoutAmountFormatted] = useState('');
 
   // Format currency
   const formatAmount = (amount) => {
@@ -165,19 +161,6 @@ const WalletPage = () => {
     return new Intl.NumberFormat('en-NG').format(number || 0);
   };
 
-  // Handle amount input with comma formatting
-  const handleAmountChange = (value) => {
-    // Remove commas and non-numeric characters
-    const numericValue = value.replace(/[^\d]/g, '');
-    setPayoutAmount(numericValue);
-    
-    // Format with commas for display
-    if (numericValue) {
-      setPayoutAmountFormatted(formatNumberWithCommas(parseInt(numericValue)));
-    } else {
-      setPayoutAmountFormatted('');
-    }
-  };
 
   // Get transaction icon
   const getTransactionIcon = (transaction) => {
@@ -404,138 +387,6 @@ const WalletPage = () => {
   );
 
   // Handlers
-  const handleRequestPayout = async () => {
-    if (!payoutAmount || parseFloat(payoutAmount) <= 0) {
-      toast({
-        variant: 'destructive',
-        title: 'Invalid amount',
-        description: 'Please enter a valid payout amount.'
-      });
-      return;
-    }
-
-    if (parseFloat(payoutAmount) > stats.balance) {
-      toast({
-        variant: 'destructive',
-        title: 'Insufficient balance',
-        description: `You cannot request more than your current balance of ${formatAmount(stats.balance)}.`
-      });
-      return;
-    }
-
-    if (!user?.id || !wallet?.id) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'User or wallet not found. Please try again.'
-      });
-      return;
-    }
-
-    try {
-      // First, get user's bank details
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('bank_account_number, bank_code, account_name, bank_name')
-        .eq('id', user.id)
-        .single();
-
-      if (userError || !userData) {
-        toast({
-          variant: 'destructive',
-          title: 'Bank Details Required',
-          description: 'Please add your bank account details in Settings before requesting a payout.'
-        });
-        return;
-      }
-
-      if (!userData.bank_account_number || !userData.bank_code) {
-        toast({
-          variant: 'destructive',
-          title: 'Bank Details Required',
-          description: 'Please add your bank account details in Settings before requesting a payout.'
-        });
-        return;
-      }
-
-      // Create payout request in database
-      const { data: payoutData, error: payoutError } = await supabase
-        .from('payouts')
-        .insert({
-          wallet_id: wallet.id,
-          amount: parseFloat(payoutAmount),
-          destination_bank_code: userData.bank_code,
-          destination_account: userData.bank_account_number,
-          status: 'requested',
-          provider: 'paystack',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (payoutError) {
-        console.error('Error creating payout request:', payoutError);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Failed to create payout request. Please try again.'
-        });
-        return;
-      }
-
-      // Create audit log entry
-      const { error: auditError } = await supabase
-        .from('audit_logs')
-        .insert({
-          user_id: user.id,
-          action: 'payout_requested',
-          details: {
-            payout_id: payoutData.id,
-            amount: parseFloat(payoutAmount),
-            bank_account: userData.bank_account_number,
-            bank_name: userData.bank_name
-          },
-          created_at: new Date().toISOString()
-        });
-
-      if (auditError) {
-        console.error('Error creating audit log:', auditError);
-        // Don't fail the payout request if audit log fails
-      }
-
-      toast({
-        title: 'Payout Request Submitted',
-        description: `Your request for ${formatAmount(parseFloat(payoutAmount))} has been submitted and will be processed within 1-2 business days.`
-      });
-      
-      setPayoutModalOpen(false);
-      setPayoutAmount('');
-      setPayoutAmountFormatted('');
-      
-      // Refresh wallet data to show updated information
-      refreshWallet();
-      
-      // Refresh payouts to show the new payout request in transaction history
-      const { data: updatedPayouts, error: payoutRefreshError } = await supabase
-        .from('payouts')
-        .select('*')
-        .eq('wallet_id', wallet.id)
-        .order('created_at', { ascending: false });
-
-      if (!payoutRefreshError && updatedPayouts) {
-        setPayouts(updatedPayouts);
-      }
-      
-    } catch (error) {
-      console.error('Error requesting payout:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'An unexpected error occurred. Please try again.'
-      });
-    }
-  };
 
   const handleSaveBankDetails = async () => {
     if (!bankDetails.accountName || !bankDetails.accountNumber || !bankDetails.bankName) {
@@ -745,7 +596,7 @@ const WalletPage = () => {
 
             {/* Request Payout Card */}
             <button
-              onClick={() => setPayoutModalOpen(true)}
+              onClick={() => router.push('/dashboard/wallet/request-payout')}
               disabled={!stats.balance || stats.balance <= 0}
               className="border text-card-foreground shadow-sm bg-brand-purple-dark p-6 flex flex-col items-center justify-center gap-2 transition-all duration-150 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -1102,138 +953,6 @@ const WalletPage = () => {
         </div>
       </div>
 
-      {/* Payout Request Modal */}
-      <Dialog open={payoutModalOpen} onOpenChange={setPayoutModalOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 pr-8">
-              <ArrowUpRight className="w-5 h-5" />
-              Request Payout
-            </DialogTitle>
-            <DialogDescription>
-              Request a withdrawal from your wallet balance
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <div>
-                  Available balance: <strong>{formatAmount(stats.balance)}</strong>
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="payout-amount">Amount (₦)</Label>
-              <Input
-                id="payout-amount"
-                type="text"
-                placeholder={hasBankDetails ? "Enter amount" : "Setup bank details first"}
-                value={payoutAmountFormatted}
-                onChange={(e) => handleAmountChange(e.target.value)}
-                disabled={!hasBankDetails}
-                className={cn(
-                  "rounded-none",
-                  !hasBankDetails && "bg-gray-100 cursor-not-allowed"
-                )}
-              />
-              {hasBankDetails ? (
-                <p className="text-xs text-gray-500">
-                  Minimum payout amount is ₦1,000
-                </p>
-              ) : (
-                <p className="text-xs text-red-500">
-                  Please setup your bank account details in Settings first
-                </p>
-              )}
-            </div>
-
-            {/* Bank Details Warning */}
-            {!hasBankDetails && (
-              <div className="bg-red-50 border border-red-200 p-3 text-sm text-red-800">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <strong>Bank Account Required</strong>
-                    <p className="mt-1">
-                      You need to add your bank account details before requesting payouts. 
-                      Go to Settings to add your account information.
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setPayoutModalOpen(false);
-                        router.push('/dashboard/settings');
-                      }}
-                      className="mt-2 border-2 border-red-300 text-red-700 hover:bg-red-100 text-xs px-3 py-1 transition-all duration-150"
-                    >
-                      Go to Settings
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Processing Timeline Card */}
-            <div className="border-2 border-orange-300 bg-orange-50 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Clock className="w-5 h-5 text-orange-600" />
-                <h3 className="font-semibold text-orange-800">Processing Timeline</h3>
-              </div>
-              <ul className="text-sm text-orange-700 space-y-1">
-                <li>• Request Submitted: Immediate confirmation</li>
-                <li>• Admin Review: Within 24 hours</li>
-                <li>• Processing: 24-48 hours after approval</li>
-                <li>• Funds Transfer: 1-2 business days</li>
-              </ul>
-              <p className="text-xs text-orange-600 mt-2">
-                You'll receive email notifications at each step.
-              </p>
-            </div>
-
-            {/* Auto-Approval Card */}
-            <div className="border-2 border-green-300 bg-green-50 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
-                <h3 className="font-semibold text-green-800">Auto-Approval Available</h3>
-              </div>
-              <p className="text-sm text-green-700">
-                Withdrawals of ₦5,000 or less are automatically approved for verified users and processed immediately!
-              </p>
-              <p className="text-xs text-green-600 mt-1">
-                Larger amounts require manual admin review for security.
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setPayoutModalOpen(false);
-                setPayoutAmount('');
-                setPayoutAmountFormatted('');
-              }} 
-              className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] text-base font-bold px-6 py-2 transition-all duration-150 active:shadow-[0px_0px_0px_#161B47] active:brightness-90"
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleRequestPayout}
-              disabled={!hasBankDetails}
-              className={cn(
-                "border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] text-base font-bold px-6 py-2 transition-all duration-150 active:shadow-[0px_0px_0px_#161B47] active:brightness-90",
-                hasBankDetails 
-                  ? "bg-brand-purple-dark hover:bg-brand-purple text-white" 
-                  : "bg-gray-400 text-gray-600 cursor-not-allowed"
-              )}
-            >
-              {hasBankDetails ? "Submit Request" : "Setup Bank Details First"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Bank Details Modal */}
       <Dialog open={bankDetailsModalOpen} onOpenChange={setBankDetailsModalOpen}>

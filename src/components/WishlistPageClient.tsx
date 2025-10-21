@@ -48,6 +48,7 @@ const WishlistPageClient = ({ initialWishlist }: { initialWishlist?: any }) => {
   const [items, setItems] = useState<any[]>([]);
   const [goals, setGoals] = useState<any[]>([]);
   const [loading, setLoading] = useState(!initialWishlist);
+  const [itemsLoading, setItemsLoading] = useState(true);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
@@ -57,6 +58,7 @@ const WishlistPageClient = ({ initialWishlist }: { initialWishlist?: any }) => {
   const wishlistUrl = typeof window !== 'undefined' ? `${window.location.origin}/${username}/${slug}` : '';
 
   const fetchWishlistData = useCallback(async () => {
+    setItemsLoading(true);
     const { data, error } = await supabase
       .from('wishlists')
       .select('*, user:users!inner(full_name, username, email, is_active), goals(*, contributions(*))')
@@ -99,6 +101,7 @@ const WishlistPageClient = ({ initialWishlist }: { initialWishlist?: any }) => {
     }
 
     setLoading(false);
+    setItemsLoading(false);
   }, [slug, username, router]);
 
   useEffect(() => {
@@ -111,6 +114,7 @@ const WishlistPageClient = ({ initialWishlist }: { initialWishlist?: any }) => {
       
       // Still need to fetch items separately
       const fetchItems = async () => {
+        setItemsLoading(true);
         const { data: itemsData, error: itemsError } = await supabase
           .from('wishlist_items')
           .select(`
@@ -136,6 +140,7 @@ const WishlistPageClient = ({ initialWishlist }: { initialWishlist?: any }) => {
         } else {
           setItems(itemsData || []);
         }
+        setItemsLoading(false);
       };
       
       fetchItems();
@@ -453,7 +458,12 @@ const WishlistPageClient = ({ initialWishlist }: { initialWishlist?: any }) => {
               </div>
             </div>
             
-            {items.length > 0 ? (
+            {itemsLoading ? (
+              <div className="text-center py-16 px-8">
+                <Loader2 className="mx-auto h-12 w-12 animate-spin text-brand-purple-dark" />
+                <p className="mt-4 text-gray-600">Loading wishlist items...</p>
+              </div>
+            ) : items.length > 0 ? (
               <>
                 <div className={viewMode === 'grid' ? 'space-y-4 lg:grid lg:grid-cols-4 lg:gap-6 lg:space-y-0' : 'space-y-4'}>
                   {currentItems.map((item: any) => (

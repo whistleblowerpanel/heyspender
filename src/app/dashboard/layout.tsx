@@ -14,11 +14,19 @@ export default function DashboardLayoutWrapper({
 }) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const hasCheckedRef = React.useRef(false);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    // Only run auth check when user state changes (not on every render)
+    if (!authLoading && user) {
+      // User is loaded
+      hasCheckedRef.current = true;
+    } else if (!authLoading && !user && hasCheckedRef.current) {
+      // User was logged out after being logged in
+      console.log('User logged out, redirecting to login');
       router.push('/auth/login');
     }
+    // Don't redirect on initial load when user is null - might just be loading
   }, [user, authLoading, router]);
 
   if (authLoading) {
@@ -30,7 +38,7 @@ export default function DashboardLayoutWrapper({
   }
 
   if (!user) {
-    return null; // Will redirect
+    return null; // Will redirect via useEffect if needed
   }
 
   return (

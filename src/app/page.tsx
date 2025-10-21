@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Gift, Share2, Heart, Sparkles, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import CashGoalsSection from '@/components/CashGoalsSection';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -293,10 +294,17 @@ const TestimonialsSection = () => {
 
 const HomePage = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const [flippedCardIndex, setFlippedCardIndex] = useState(null);
   
   const handleGetStarted = () => {
-    router.push('/auth/register');
+    if (user) {
+      // If user is already logged in, go to dashboard
+      router.push('/dashboard');
+    } else {
+      // If user is not logged in, go to Get Started wizard
+      router.push('/get-started');
+    }
   };
 
   const handleCardClick = (index) => {

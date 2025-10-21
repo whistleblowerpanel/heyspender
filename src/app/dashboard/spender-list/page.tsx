@@ -17,6 +17,7 @@ const SpenderListPage = () => {
 
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showArchived, setShowArchived] = useState(false);
 
 
   useEffect(() => {
@@ -156,11 +157,30 @@ const SpenderListPage = () => {
       <div className="px-4 pt-32 pb-28 sm:pb-36">
         <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-brand-purple-dark mb-2">Spender List</h1>
-          <p className="text-gray-600">
-            Track and manage items you've claimed from other people's wishlists
-          </p>
-          
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-brand-purple-dark mb-2">Spender List</h1>
+              <p className="text-gray-600">
+                Track and manage items you've claimed from other people's wishlists
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={!showArchived ? "custom" : "outline"}
+                className={!showArchived ? "bg-brand-green text-black" : ""}
+                onClick={() => setShowArchived(false)}
+              >
+                Active ({claims.filter(c => !c.archived).length})
+              </Button>
+              <Button
+                variant={showArchived ? "custom" : "outline"}
+                className={showArchived ? "bg-brand-purple-dark text-white" : ""}
+                onClick={() => setShowArchived(true)}
+              >
+                Archived ({claims.filter(c => c.archived).length})
+              </Button>
+            </div>
+          </div>
         </div>
 
         {loading ? (
@@ -169,35 +189,46 @@ const SpenderListPage = () => {
               <div key={i} className="h-48 bg-gray-200 rounded" />
             ))}
           </div>
-        ) : claims.length === 0 ? (
-          <div className="text-center py-16">
-            <ShoppingBag className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-4 text-xl font-semibold">No Claims Yet</h3>
-            <p className="mt-2 text-sm text-gray-500">
-              You haven't claimed any items yet. Browse public wishlists to get started!
-            </p>
-            <Button 
-              variant="custom" 
-              className="bg-brand-orange text-black mt-4"
-              onClick={() => router.push('/explore')}
-            >
-              Browse Public Wishlists
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-            {claims.map((claim) => (
-              <SpenderListCard
-                key={claim.id}
-                claim={claim}
-                onUpdateStatus={handleClaimStatusUpdate}
-                onUpdateClaim={handleClaimUpdate}
-                onDelete={handleClaimDelete}
-                onViewWishlist={handleViewClaimWishlist}
-              />
-            ))}
-          </div>
-        )}
+        ) : (() => {
+          const filteredClaims = claims.filter(c => showArchived ? c.archived : !c.archived);
+          
+          return filteredClaims.length === 0 ? (
+            <div className="text-center py-16">
+              <ShoppingBag className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-4 text-xl font-semibold">
+                {showArchived ? 'No Archived Items' : 'No Claims Yet'}
+              </h3>
+              <p className="mt-2 text-sm text-gray-500">
+                {showArchived 
+                  ? 'You haven\'t archived any items yet.'
+                  : 'You haven\'t claimed any items yet. Browse public wishlists to get started!'
+                }
+              </p>
+              {!showArchived && (
+                <Button 
+                  variant="custom" 
+                  className="bg-brand-orange text-black mt-4"
+                  onClick={() => router.push('/explore')}
+                >
+                  Browse Public Wishlists
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+              {filteredClaims.map((claim) => (
+                <SpenderListCard
+                  key={claim.id}
+                  claim={claim}
+                  onUpdateStatus={handleClaimStatusUpdate}
+                  onUpdateClaim={handleClaimUpdate}
+                  onDelete={handleClaimDelete}
+                  onViewWishlist={handleViewClaimWishlist}
+                />
+              ))}
+            </div>
+          );
+        })()}
         </div>
       </div>
     </div>

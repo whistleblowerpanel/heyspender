@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { initializePaystackPayment } from '@/lib/paystackService';
 import { 
   Calendar as CalendarIcon, 
   Clock, 
@@ -16,7 +17,9 @@ import {
   Edit3,
   Gift,
   Eye,
-  Trash2
+  Trash2,
+  Archive,
+  ArchiveRestore
 } from 'lucide-react';
 import { 
   Dialog, 
@@ -128,25 +131,7 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
   const remainingAmount = estimatedPrice - effectiveAmountPaid;
   const isFulfilled = claim?.status === 'fulfilled' || isFullyPaid;
   
-  // Debug logging for specific items if needed
-  if (item?.name === 'Swimming Pool Day' || item?.name === 'Walking Sticks') {
-    console.log('🔍 [SpenderListCard] Payment Debug:', {
-      itemName: item?.name,
-      itemPrice,
-      amountPaid,
-      quantityPurchased,
-      estimatedPrice,
-      totalPaidFromTransactions,
-      totalPaidFromLocal,
-      baseAmountPaid,
-      effectiveAmountPaid,
-      remainingAmount,
-      isFullyPaid,
-      walletTransactions: walletTransactions.length,
-      claimId: claim?.id,
-      claimStatus: claim?.status
-    });
-  }
+  // Debug logging removed for production
   
   
   // Modal states
@@ -182,26 +167,20 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
     const loadReminder = async () => {
       if (!claim?.id) return;
       
-      console.log('🔍 [SpenderListCard] Loading reminder for claim:', claim.id, 'Item:', claim?.wishlist_items?.name);
-      
       try {
         const result = await ReminderService.getReminderForClaim({ claimId: claim.id });
-        console.log('🔍 [SpenderListCard] Reminder result:', result);
         
         if (result.success && result.data) {
-          console.log('✅ [SpenderListCard] Found reminder:', result.data);
           setDatabaseReminder(result.data);
-          setSavedReminderDateTime(new Date(result.data.schedule_at));
+          setSavedReminderDateTime(new Date(result.data.scheduled_at));
           
           // Pre-populate the reminder form with existing reminder data
-          const existingDate = new Date(result.data.schedule_at);
+          const existingDate = new Date(result.data.scheduled_at);
           setReminderDate(existingDate);
           setReminderTime(existingDate.toTimeString().slice(0, 5)); // HH:MM format
-        } else {
-          console.log('ℹ️ [SpenderListCard] No reminder found for claim:', claim.id);
         }
       } catch (error) {
-        console.error('❌ [SpenderListCard] Error loading reminder:', error);
+        console.error('Error loading reminder:', error);
       }
     };
     
@@ -227,7 +206,7 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
 
   // Update countdown every minute
   React.useEffect(() => {
-    if (!savedReminderDateTime) return;
+    if (!savedReminderDateTime || typeof window === 'undefined') return;
 
     const updateCountdown = () => {
       const now = new Date();
@@ -290,7 +269,7 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
     setShowCashDialog(false);
     
     try {
-      await initializePaystackPayment();
+      await handlePaystackPayment();
     } catch (error) {
       console.error('Payment initialization error:', error);
       
@@ -320,13 +299,11 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
     });
   };
 
-  const initializePaystackPayment = async () => {
+  const handlePaystackPayment = async () => {
     const amount = parseFloat(cashAmount) * 100; // Convert to kobo
     const paymentRef = `payment_${Date.now()}_${claim.id}`;
     
     try {
-      const { initializePaystackPayment: initPayment } = await import('@/lib/paystackService');
-      
       const paymentData = {
         email: user.email,
         amount: amount,
@@ -348,7 +325,7 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
         }
       };
 
-      const result = await initPayment(paymentData);
+      const result = await initializePaystackPayment(paymentData);
       
       if (result.error) {
         console.log('Payment initialization result:', result.error.message);
@@ -363,105 +340,6 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
         description: 'Failed to initialize payment. Please try again or contact support.'
       });
     }
-  };
-
-  // Use hosted payment page (works around CORS issues)
-  const useHostedPaymentPage = (paymentData) => {
-    try {
-      console.log('Using hosted payment page...');
-      
-      // Show payment instructions for development
-      showPaymentInstructions(paymentData);
-      
-    } catch (error) {
-      console.error('Hosted payment page failed:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Payment Error',
-        description: 'Failed to process payment. Please try again.'
-      });
-    }
-  };
-
-  // Show payment instructions for development
-  const showPaymentInstructions = (paymentData) => {
-    const amount = (paymentData.amount / 100).toLocaleString();
-    const reference = paymentData.reference;
-    const email = paymentData.email;
-    const itemName = paymentData.metadata?.item_name || 'Unknown item';
-    
-    // Show detailed payment instructions
-    toast({
-      title: 'Payment Instructions',
-      description: `Amount: ₦${amount} | Reference: ${reference.substring(0, 20)}...`,
-      duration: 15000
-    });
-    
-    // Log detailed instructions
-    console.log('=== SEND CASH PAYMENT INSTRUCTIONS ===');
-    console.log(`Item: ${itemName}`);
-    console.log(`Amount: ₦${amount}`);
-    console.log(`Reference: ${reference}`);
-    console.log(`Email: ${email}`);
-    console.log('=====================================');
-    
-    // Show a modal with payment details
-    showPaymentModal(paymentData);
-  };
-
-  // Show payment modal with instructions
-  const showPaymentModal = (paymentData) => {
-    const amount = (paymentData.amount / 100).toLocaleString();
-    const reference = paymentData.reference;
-    const email = paymentData.email;
-    const itemName = paymentData.metadata?.item_name || 'Unknown item';
-    
-    // Create a modal with payment instructions
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-    modal.innerHTML = `
-      <div class="bg-white p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-bold mb-4">Payment Instructions</h3>
-        <div class="space-y-2 text-sm">
-          <p><strong>Item:</strong> ${itemName}</p>
-          <p><strong>Amount:</strong> ₦${amount}</p>
-          <p><strong>Reference:</strong> ${reference}</p>
-          <p><strong>Email:</strong> ${email}</p>
-        </div>
-        <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200">
-          <p class="text-sm text-yellow-800">
-            <strong>Note:</strong> This is a development environment. In production, you would be redirected to Paystack's secure payment page.
-          </p>
-        </div>
-        <div class="mt-4 flex justify-end space-x-2">
-          <button id="cancel-payment" class="px-4 py-2 bg-gray-300 text-gray-700 hover:bg-gray-400">
-            Cancel
-          </button>
-          <button id="simulate-payment" class="px-4 py-2 bg-green-600 text-white hover:bg-green-700">
-            Simulate Payment
-          </button>
-        </div>
-      </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Add event listeners
-    modal.querySelector('#cancel-payment').addEventListener('click', () => {
-      document.body.removeChild(modal);
-      handlePaymentCancellation();
-    });
-    
-    modal.querySelector('#simulate-payment').addEventListener('click', () => {
-      document.body.removeChild(modal);
-      // Simulate successful payment
-      const mockResponse = {
-        reference: reference,
-        status: 'success',
-        transaction: reference
-      };
-      handlePaymentSuccess(mockResponse, reference);
-    });
   };
 
 
@@ -479,8 +357,12 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
       // Credit the recipient's wallet
       await creditRecipientWallet(wishlistOwner.id, parseFloat(cashAmount), paymentRef);
       
-      // Create payment status record
-      await createPaymentStatusRecord(parseFloat(cashAmount), paymentRef);
+      // Create payment status record (optional - don't let this break payment)
+      try {
+        await createPaymentStatusRecord(parseFloat(cashAmount), paymentRef);
+      } catch (notificationError) {
+        console.warn('Failed to create payment notification (payment still successful):', notificationError);
+      }
       
       // Update the claim's amount_paid field to reflect the payment
       const newAmountPaid = (claim?.amount_paid || 0) + parseFloat(cashAmount);
@@ -492,9 +374,6 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
       if (updateError) {
         console.error('Error updating claim amount_paid:', updateError);
       }
-      
-      // Update local payment state for immediate UI feedback
-      updateLocalPaymentState(parseFloat(cashAmount));
       
       // Calculate updated amounts for success message
       const updatedAmountPaid = effectiveAmountPaid + parseFloat(cashAmount);
@@ -510,6 +389,9 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
           ? `₦${Number(cashAmount).toLocaleString()} sent! You have successfully paid for ${itemName}.`
           : `₦${Number(cashAmount).toLocaleString()} sent for ${itemName}! ₦${remainingAfterPayment.toLocaleString()} remaining.`
       });
+      
+      // Clear local payments to prevent double-counting
+      setLocalPayments([]);
       
       // Trigger data refresh with a small delay to ensure database update is complete
       setTimeout(() => {
@@ -532,7 +414,22 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
 
   const createPaymentStatusRecord = async (amount, paymentRef) => {
     try {
-      const { error } = await supabase
+      console.log('Creating payment notification for:', {
+        user_id: wishlistOwner.id,
+        type: 'payment_received',
+        title: 'Payment Received',
+        message: `You received ₦${amount.toLocaleString()} for "${item.name}" from ${user.user_metadata?.username || user.email?.split('@')[0]}`,
+        data: {
+          claim_id: claim.id,
+          item_name: item.name,
+          amount: amount,
+          payment_ref: paymentRef,
+          sender_id: user.id,
+          sender_username: user.user_metadata?.username || user.email?.split('@')[0]
+        }
+      });
+
+      const { data, error } = await supabase
         .from('notifications')
         .insert({
           user_id: wishlistOwner.id,
@@ -547,27 +444,29 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
             sender_id: user.id,
             sender_username: user.user_metadata?.username || user.email?.split('@')[0]
           }
-        });
+        })
+        .select();
       
       if (error) {
-        console.error('Error creating payment status record:', error);
+        console.error('Error creating payment status record:', {
+          error,
+          errorCode: error.code,
+          errorMessage: error.message,
+          errorDetails: error.details,
+          errorHint: error.hint
+        });
+        // Don't throw the error - notification creation failure shouldn't break payment
+      } else {
+        console.log('Payment notification created successfully:', data);
       }
     } catch (error) {
-      console.error('Error in createPaymentStatusRecord:', error);
+      console.error('Error in createPaymentStatusRecord:', {
+        error,
+        errorMessage: error.message,
+        errorStack: error.stack
+      });
+      // Don't throw the error - notification creation failure shouldn't break payment
     }
-  };
-
-  const updateLocalPaymentState = (amount) => {
-    const newPayment = {
-      id: `local_${Date.now()}`,
-      amount: amount,
-      created_at: new Date().toISOString(),
-      claim_id: claim.id
-    };
-    
-    setLocalPayments(prev => [...prev, newPayment]);
-    
-    // Don't trigger data refresh here - let the parent handle it after database update
   };
 
   const creditRecipientWallet = async (recipientId, amount, paymentRef) => {
@@ -739,10 +638,45 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
     }
   };
 
-  const isExpired = claim?.expire_at ? new Date(claim.expire_at) < new Date() : false;
-  const daysUntilExpiry = claim?.expire_at 
-    ? Math.ceil((new Date(claim.expire_at) - new Date()) / (1000 * 60 * 60 * 24))
-    : null;
+  const handleToggleArchive = async () => {
+    try {
+      const newArchivedStatus = !claim?.archived;
+      
+      if (onUpdateClaim) {
+        await onUpdateClaim(claim.id, { archived: newArchivedStatus });
+        toast({ 
+          title: newArchivedStatus ? 'Item archived' : 'Item unarchived',
+          description: newArchivedStatus ? 'Item moved to archive' : 'Item restored to active list'
+        });
+      }
+    } catch (error) {
+      console.error('Error toggling archive:', error);
+      toast({ 
+        variant: 'destructive', 
+        title: 'Archive Error', 
+        description: error.message || 'Failed to update archive status'
+      });
+    }
+  };
+
+  // Client-side only calculations to prevent hydration mismatches
+  const [isExpired, setIsExpired] = React.useState(false);
+  const [daysUntilExpiry, setDaysUntilExpiry] = React.useState(null);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const eventDate = wishlist?.wishlist_date;
+    if (eventDate) {
+      const now = new Date();
+      const expiryDate = new Date(eventDate);
+      setIsExpired(expiryDate < now);
+      setDaysUntilExpiry(Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24)));
+    } else {
+      setIsExpired(false);
+      setDaysUntilExpiry(null);
+    }
+  }, [wishlist?.wishlist_date]);
 
   return (
     <div className="bg-white border-2 border-black overflow-hidden hover:shadow-lg transition-shadow">
@@ -793,6 +727,19 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleToggleArchive}>
+                {claim?.archived ? (
+                  <>
+                    <ArchiveRestore className="mr-2 h-4 w-4" />
+                    Unarchive
+                  </>
+                ) : (
+                  <>
+                    <Archive className="mr-2 h-4 w-4" />
+                    Archive
+                  </>
+                )}
+              </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => !isFullyPaid && setShowDeleteDialog(true)}
                 className={`${isFullyPaid ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 focus:text-red-600 focus:bg-red-50'}`}
@@ -868,10 +815,7 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
         <div className="space-y-2">
           <div className="flex gap-2">
             <Button
-              onClick={() => {
-                console.log('🟢 Send Cash button clicked - opening dialog');
-                setShowCashDialog(true);
-              }}
+              onClick={() => setShowCashDialog(true)}
               className={`flex-1 ${isFullyPaid ? 'bg-gray-300 text-gray-600 hover:bg-gray-300' : 'bg-brand-green text-black hover:bg-brand-green/90'}`}
               size="sm"
               disabled={isFullyPaid}
@@ -918,19 +862,16 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
 
         {/* Meta */}
         <div className="mt-4 text-xs text-gray-500">
-          {claim?.expire_at && !isExpired && daysUntilExpiry !== null && (
-            <span>Expiring in <strong>{daysUntilExpiry} day{daysUntilExpiry !== 1 ? 's' : ''}</strong> | </span>
+          {wishlist?.wishlist_date && !isExpired && daysUntilExpiry !== null && daysUntilExpiry > 0 && (
+            <span>Event in <strong>{daysUntilExpiry} day{daysUntilExpiry !== 1 ? 's' : ''}</strong> | </span>
           )}
-          {isExpired && <span className="text-red-600">Expired | </span>}
+          {isExpired && <span className="text-red-600">Event Passed | </span>}
           <span>For: <strong>@{wishlistOwner.username || 'Unknown'}</strong></span>
         </div>
       </div>
 
       {/* Modals */}
-      <Dialog open={showCashDialog} onOpenChange={(open) => {
-        console.log('🟡 Dialog state changed:', open);
-        setShowCashDialog(open);
-      }}>
+      <Dialog open={showCashDialog} onOpenChange={setShowCashDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="pr-8">Send Cash</DialogTitle>
@@ -948,22 +889,30 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
                 onChange={(e) => {
                   // Remove commas and non-numeric characters
                   const numericValue = e.target.value.replace(/,/g, '').replace(/[^\d]/g, '');
-                  console.log('💰 Amount changed:', numericValue);
                   setCashAmount(numericValue);
                 }}
                 placeholder="Enter amount"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCashDialog(false)}>Cancel</Button>
+          <DialogFooter className="mt-6">
             <Button 
+              variant="outline" 
+              type="button"
+              onClick={() => setShowCashDialog(false)}
+              className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button"
+              variant="custom"
               onClick={(e) => {
-                console.log('🟣 Send Cash button in dialog clicked');
                 e.preventDefault();
                 handleSendCash();
               }} 
               disabled={isProcessingPayment}
+              className="bg-brand-green text-black border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
             >
               {isProcessingPayment ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</>
@@ -1013,9 +962,9 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
                     disabled={(date) => {
                       const today = new Date(new Date().setHours(0, 0, 0, 0));
                       if (date < today) return true;
-                      if (claim?.expire_at) {
-                        const expiryDate = new Date(claim.expire_at);
-                        if (date > expiryDate) return true;
+                      if (wishlist?.wishlist_date) {
+                        const eventDate = new Date(wishlist.wishlist_date);
+                        if (date > eventDate) return true;
                       }
                       return false;
                     }}
@@ -1036,17 +985,17 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
                     : undefined
                 }
                 max={
-                  reminderDate && claim?.expire_at &&
-                  new Date(reminderDate).toDateString() === new Date(claim.expire_at).toDateString()
-                    ? new Date(claim.expire_at).toTimeString().slice(0, 5)
+                  reminderDate && wishlist?.wishlist_date &&
+                  new Date(reminderDate).toDateString() === new Date(wishlist.wishlist_date).toDateString()
+                    ? new Date(wishlist.wishlist_date).toTimeString().slice(0, 5)
                     : undefined
                 }
               />
               {reminderDate && new Date(reminderDate).toDateString() === new Date().toDateString() && (
                 <p className="text-xs text-gray-500 mt-1">Must be after current time</p>
               )}
-              {reminderDate && claim?.expire_at && new Date(reminderDate).toDateString() === new Date(claim.expire_at).toDateString() && (
-                <p className="text-xs text-gray-500 mt-1">Must be before expiry time</p>
+              {reminderDate && wishlist?.wishlist_date && new Date(reminderDate).toDateString() === new Date(wishlist.wishlist_date).toDateString() && (
+                <p className="text-xs text-gray-500 mt-1">Must be before event time</p>
               )}
             </div>
             
@@ -1059,11 +1008,12 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
               </div>
             )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="mt-6">
             <div className="flex justify-between w-full items-center">
               {savedReminderDateTime && (
                 <Button 
                   variant="ghost" 
+                  type="button"
                   onClick={async () => {
                     try {
                       const result = await ReminderService.cancelReminder({ claimId: claim.id });
@@ -1081,14 +1031,26 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
                       toast({ variant: 'destructive', title: 'Error', description: 'Failed to clear reminder' });
                     }
                   }}
-                  className="text-red-600 hover:text-red-700"
+                  className="text-red-600 hover:text-red-700 hover:underline"
                 >
                   Clear Reminder
                 </Button>
               )}
               <div className="flex gap-2 ml-auto">
-                <Button variant="outline" onClick={() => setShowReminderDialog(false)}>Cancel</Button>
-                <Button onClick={handleSetReminder}>
+                <Button 
+                  variant="outline" 
+                  type="button"
+                  onClick={() => setShowReminderDialog(false)}
+                  className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="button"
+                  variant="custom"
+                  onClick={handleSetReminder}
+                  className="bg-brand-green text-black border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
+                >
                   {savedReminderDateTime 
                     ? (databaseReminder ? 'Update Auto-Reminder' : 'Update Reminder') 
                     : 'Set Reminder'
@@ -1112,9 +1074,23 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
             placeholder="E.g., Color preference, size, delivery instructions..."
             rows={4}
           />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNotesDialog(false)}>Cancel</Button>
-            <Button onClick={handleSaveNotes}>Save Note</Button>
+          <DialogFooter className="mt-6">
+            <Button 
+              variant="outline" 
+              type="button"
+              onClick={() => setShowNotesDialog(false)}
+              className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button"
+              variant="custom"
+              onClick={handleSaveNotes}
+              className="bg-brand-green text-black border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
+            >
+              Save Note
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1166,17 +1142,20 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="mt-6">
             <Button 
               variant="outline" 
+              type="button"
               onClick={() => setShowDeleteDialog(false)}
-              className="border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]"
+              className="border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
             >
               Cancel
             </Button>
             <Button 
+              type="button"
+              variant="custom"
               onClick={handleDeleteConfirm}
-              className="bg-red-600 hover:bg-red-700 text-white border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]"
+              className="bg-brand-accent-red hover:bg-brand-accent-red/90 text-white border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Remove {quantityToRemove > 1 ? `${quantityToRemove} Items` : 'Item'}
