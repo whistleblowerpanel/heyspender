@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function VerifyCatchAll() {
+const VerifyCatchAllContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -32,5 +32,20 @@ export default function VerifyCatchAll() {
         <p className="text-gray-600">Redirecting to verification page...</p>
       </div>
     </div>
+  );
+};
+
+export default function VerifyCatchAll() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-brand-purple-dark border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <VerifyCatchAllContent />
+    </Suspense>
   );
 }

@@ -16,9 +16,7 @@ const nextConfig = {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY,
   },
   // Optimize for Vercel deployment
-  experimental: {
-    serverComponentsExternalPackages: ['@supabase/supabase-js'],
-  },
+  serverExternalPackages: ['@supabase/supabase-js'],
   // Ensure proper error handling
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,

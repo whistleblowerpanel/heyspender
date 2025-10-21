@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
@@ -92,7 +92,8 @@ const occasions = [
   { name: 'No occasion', icon: PartyPopper, value: null }
 ];
 
-const GetStartedPage = () => {
+// Component that uses useSearchParams - needs to be wrapped in Suspense
+const GetStartedContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading } = useAuth();
@@ -844,6 +845,22 @@ const GetStartedPage = () => {
         type="goal"
       />
     </div>
+  );
+};
+
+// Main component that wraps GetStartedContent in Suspense
+const GetStartedPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-brand-purple-dark animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <GetStartedContent />
+    </Suspense>
   );
 };
 
