@@ -61,9 +61,19 @@ export const AuthProvider = ({ children }) => {
             setUser(enhancedUser);
             console.log('Auth user updated:', enhancedUser?.id, enhancedUser?.email, 'role:', userData.role, 'verified:', userVerified);
             return;
+          } else if (error && error.code === 'PGRST116') {
+            // User record doesn't exist yet (common during registration)
+            console.log('User record not found in database yet, using auth user data');
+            setUser(newUser);
+            console.log('Auth user updated:', newUser?.id, newUser?.email, 'verified:', userVerified);
+            return;
           }
         } catch (error) {
           console.warn('Error fetching user role from database:', error);
+          // If there's an error fetching user data, still set the user
+          setUser(newUser);
+          console.log('Auth user updated (fallback):', newUser?.id, newUser?.email, 'verified:', userVerified);
+          return;
         }
       }
       

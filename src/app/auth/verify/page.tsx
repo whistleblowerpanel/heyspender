@@ -5,19 +5,75 @@ import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
-import { MailCheck, ArrowLeft, X } from 'lucide-react';
+import { MailCheck, ArrowLeft, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/customSupabaseClient';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
 const VerifyPageContent = () => {
   const [isCheckingSession, setIsCheckingSession] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState('checking'); // 'checking', 'verified', 'error', 'pending'
+  const [errorMessage, setErrorMessage] = useState('');
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   
   const email = searchParams.get('email');
-  const returnTo = searchParams.get('returnTo');
+  const returnTo = searchParams.get('returnTo') || searchParams.get('redirect_to');
+  const token = searchParams.get('token');
+  const type = searchParams.get('type');
+
+  // Handle email verification when page loads with token
+  useEffect(() => {
+    const handleVerification = async () => {
+      // Check if user is already verified
+      if (user && user.email_confirmed_at) {
+        setVerificationStatus('verified');
+        return;
+      }
+
+      if (token && type === 'signup') {
+        try {
+          setVerificationStatus('checking');
+          
+          // Try different verification methods
+          let verificationResult = null;
+          
+          // Method 1: Try with token
+          verificationResult = await supabase.auth.verifyOtp({
+            token: token,
+            type: 'signup'
+          });
+
+          // Method 2: If that fails, try with token_hash
+          if (verificationResult.error && verificationResult.error.message.includes('token')) {
+            console.log('Trying with token_hash...');
+            verificationResult = await supabase.auth.verifyOtp({
+              token_hash: token,
+              type: 'signup'
+            });
+          }
+
+          if (verificationResult.error) {
+            console.error('Verification error:', verificationResult.error);
+            setVerificationStatus('error');
+            setErrorMessage(verificationResult.error.message || 'Verification failed');
+          } else {
+            setVerificationStatus('verified');
+            // Don't reload immediately, let the user see the success message
+          }
+        } catch (error) {
+          console.error('Verification error:', error);
+          setVerificationStatus('error');
+          setErrorMessage('An unexpected error occurred during verification');
+        }
+      } else if (!token) {
+        setVerificationStatus('pending');
+      }
+    };
+
+    handleVerification();
+  }, [token, type, user]);
 
   const handleContinueContributing = async () => {
     setIsCheckingSession(true);
@@ -53,6 +109,121 @@ const VerifyPageContent = () => {
     }
   };
 
+  const renderContent = () => {
+    switch (verificationStatus) {
+      case 'checking':
+        return (
+          <>
+            <Loader2 className="w-16 h-16 mx-auto text-brand-green animate-spin" />
+            <h1 className="text-3xl font-bold text-white">Verifying Your Email...</h1>
+            <p className="text-white/90">
+              Please wait while we verify your email address.
+            </p>
+          </>
+        );
+
+      case 'verified':
+        return (
+          <>
+            <CheckCircle className="w-16 h-16 mx-auto text-brand-green" />
+            <h1 className="text-3xl font-bold text-white">Email Verified!</h1>
+            <p className="text-white/90">
+              Your email has been successfully verified. You can now access all features of your account.
+            </p>
+            <div className="flex flex-col gap-3">
+              {/* @ts-ignore */}
+              <Button 
+                type="button"
+                variant="custom" 
+                className="bg-brand-green text-black border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]" 
+                onClick={() => router.push(returnTo || '/dashboard')}
+              >
+                Go to Dashboard
+              </Button>
+            </div>
+          </>
+        );
+
+      case 'error':
+        return (
+          <>
+            <AlertCircle className="w-16 h-16 mx-auto text-red-500" />
+            <h1 className="text-3xl font-bold text-white">Verification Failed</h1>
+            <p className="text-white/90">
+              {errorMessage || 'There was an error verifying your email address.'}
+            </p>
+            <p className="text-sm text-white/80">
+              The verification link may have expired or already been used. Please try registering again or contact support.
+            </p>
+            <div className="flex flex-col gap-3">
+              {/* @ts-ignore */}
+              <Button 
+                type="button"
+                variant="custom" 
+                className="bg-brand-green text-black border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]" 
+                onClick={() => router.push('/auth/register')}
+              >
+                Try Again
+              </Button>
+              {/* @ts-ignore */}
+              <Button 
+                type="button"
+                variant="custom" 
+                className="bg-brand-accent-red text-white border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]" 
+                onClick={() => router.push('/auth/login')}
+              >
+                Go to Login
+              </Button>
+            </div>
+          </>
+        );
+
+      case 'pending':
+      default:
+        return (
+          <>
+            <MailCheck className="w-16 h-16 mx-auto text-brand-green" />
+            <h1 className="text-3xl font-bold text-white">Check Your Inbox!</h1>
+            <p className="text-white/90">
+              We've sent a verification link to your email address. Please click the link to confirm your account.
+            </p>
+            <p className="text-sm text-white/80">
+              You can make contributions while waiting for verification, but you'll need to verify your email to access your dashboard.
+            </p>
+            <p className="text-xs text-white/60 bg-white/5 p-2 border border-white/10">
+              💡 <strong>Mobile users:</strong> If you're having trouble with the verification link, try opening it in your default browser or copy the link and paste it in a new tab.
+            </p>
+            <div className="flex flex-col gap-3">
+              {returnTo && (
+                // @ts-ignore
+                <Button 
+                  type="button"
+                  variant="custom" 
+                  className="bg-brand-green text-black border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]" 
+                  onClick={handleContinueContributing}
+                  disabled={isCheckingSession}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  <span>{isCheckingSession ? 'Checking session...' : 'Continue Contributing'}</span>
+                </Button>
+              )}
+              {/* @ts-ignore */}
+              <Button 
+                type="button"
+                variant="custom" 
+                className="bg-brand-accent-red text-white border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]" 
+                onClick={handleClose} 
+                disabled={isCheckingSession}
+              >
+                <X className="mr-2 h-4 w-4" />
+                <span>{isCheckingSession ? 'Checking session...' : 'Go to Dashboard'}</span>
+              </Button>
+            </div>
+          </>
+        );
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -63,48 +234,7 @@ const VerifyPageContent = () => {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md p-8 space-y-6 bg-brand-purple-dark text-white border-2 border-black text-center"
         >
-        <MailCheck className="w-16 h-16 mx-auto text-brand-green" />
-        
-        <h1 className="text-3xl font-bold text-white">Check Your Inbox!</h1>
-        
-        <p className="text-white/90">
-          We've sent a verification link to your email address. Please click the link to confirm your account.
-        </p>
-        
-        <p className="text-sm text-white/80">
-          You can make contributions while waiting for verification, but you'll need to verify your email to access your dashboard.
-        </p>
-
-        <p className="text-xs text-white/60 bg-white/5 p-2 border border-white/10">
-          💡 <strong>Mobile users:</strong> If you're having trouble with the verification link, try opening it in your default browser or copy the link and paste it in a new tab.
-        </p>
-
-        <div className="flex flex-col gap-3">
-          {returnTo && (
-            // @ts-ignore
-            <Button 
-              type="button"
-              variant="custom" 
-              className="bg-brand-green text-black border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]" 
-              onClick={handleContinueContributing}
-              disabled={isCheckingSession}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              <span>{isCheckingSession ? 'Checking session...' : 'Continue Contributing'}</span>
-            </Button>
-          )}
-          {/* @ts-ignore */}
-          <Button 
-            type="button"
-            variant="custom" 
-            className="bg-brand-accent-red text-white border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]" 
-            onClick={handleClose} 
-            disabled={isCheckingSession}
-          >
-            <X className="mr-2 h-4 w-4" />
-            <span>{isCheckingSession ? 'Checking session...' : 'Go to Dashboard'}</span>
-          </Button>
-        </div>
+          {renderContent()}
         </motion.div>
       </div>
       <Footer />

@@ -97,43 +97,84 @@ const RegisterPageContent = () => {
 
     const { full_name, username, email, password } = formData;
 
-    // Check if username is already taken
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('username')
-      .eq('username', username)
-      .single();
+    try {
+      // Check if username is already taken
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('username')
+        .eq('username', username)
+        .single();
 
-    if (existingUser) {
+      if (existingUser) {
+        toast({
+          title: "Error",
+          description: "Username is already taken. Please choose another one.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await signUpWithEmailPassword({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: full_name,
+            username: username
+          }
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: getUserFriendlyError(error.message),
+          variant: "destructive",
+        });
+      } else if (data?.user) {
+        // Create user record in database
+        try {
+          const { error: userError } = await supabase
+            .from('users')
+            .insert({
+              id: data.user.id,
+              email: email,
+              full_name: full_name,
+              username: username,
+              role: 'user',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+
+          if (userError) {
+            console.error('Error creating user record:', userError);
+            // Don't fail the registration, just log the error
+          }
+        } catch (error) {
+          console.error('Error creating user record:', error);
+          // Don't fail the registration, just log the error
+        }
+
+        // Handle wizard data if it exists
+        await handleWizardData(data.user.id);
+        
+        toast({
+          title: "Success",
+          description: "Account created successfully! Please check your email to verify your account.",
+        });
+
+        // Redirect to verification page
+        const verificationUrl = `/auth/verify?email=${encodeURIComponent(email)}${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ''}`;
+        router.push(verificationUrl);
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
       toast({
         title: "Error",
-        description: "Username is already taken. Please choose another one.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-      setLoading(false);
-      return;
-    }
-
-    const { data, error } = await signUpWithEmailPassword(email, password);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: getUserFriendlyError(error.message),
-        variant: "destructive",
-      });
-    } else if (data?.user) {
-      // Handle wizard data if it exists
-      await handleWizardData(data.user.id);
-      
-      toast({
-        title: "Success",
-        description: "Account created successfully! Please check your email to verify your account.",
-      });
-
-      // Redirect to verification page
-      const verificationUrl = `/auth/verify?email=${encodeURIComponent(email)}${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ''}`;
-      router.push(verificationUrl);
     }
     
     setLoading(false);
