@@ -39,18 +39,9 @@ const ResetPasswordPageContent = () => {
           return;
         }
 
-        // Verify the token by attempting to verify it
-        const { error } = await supabase.auth.verifyOtp({
-          token: token,
-          type: 'recovery'
-        });
-
-        if (error) {
-          console.error('Token verification error:', error);
-          setIsValidToken(false);
-        } else {
-          setIsValidToken(true);
-        }
+        // For password recovery, we just need to check if the token exists
+        // The actual validation happens when we submit the form
+        setIsValidToken(true);
       } catch (error) {
         console.error('Token check error:', error);
         setIsValidToken(false);
@@ -86,24 +77,10 @@ const ResetPasswordPageContent = () => {
     setLoading(true);
 
     try {
-      // First verify the token again to ensure it's still valid
-      const { error: verifyError } = await supabase.auth.verifyOtp({
+      // For password recovery with a token, we need to use verifyOtp with the recovery token
+      const { error } = await supabase.auth.verifyOtp({
         token: token,
-        type: 'recovery'
-      });
-
-      if (verifyError) {
-        toast({
-          title: "Error",
-          description: "Reset link has expired. Please request a new one.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Now update the password
-      const { error } = await supabase.auth.updateUser({
+        type: 'recovery',
         password: password
       });
 
