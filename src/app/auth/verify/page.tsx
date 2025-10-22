@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { MailCheck, ArrowLeft, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/customSupabaseClient';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -17,6 +18,7 @@ const VerifyPageContent = () => {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
   
   const email = searchParams.get('email');
   const returnTo = searchParams.get('returnTo') || searchParams.get('redirect_to');
@@ -204,6 +206,37 @@ const VerifyPageContent = () => {
     }
   };
 
+  const handleResendVerification = async () => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email || 'whistleblowerpanel@gmail.com'
+      });
+      
+      if (error) {
+        console.error('Error resending verification:', error);
+        toast({
+          title: "Error",
+          description: "Failed to resend verification email. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Verification Email Sent",
+          description: "Please check your email for the verification link.",
+          variant: "default",
+        });
+      }
+    } catch (error) {
+      console.error('Error resending verification:', error);
+      toast({
+        title: "Error",
+        description: "Failed to resend verification email. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const renderContent = () => {
     switch (verificationStatus) {
       case 'checking':
@@ -256,9 +289,9 @@ const VerifyPageContent = () => {
                 type="button"
                 variant="custom" 
                 className="bg-brand-green text-black border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]" 
-                onClick={() => router.push('/auth/register')}
+                onClick={handleResendVerification}
               >
-                Try Again
+                Resend Verification Email
               </Button>
               {/* @ts-ignore */}
               <Button 
