@@ -28,6 +28,8 @@ const ResetPasswordPageContent = () => {
 
   const token = searchParams.get('token');
   const type = searchParams.get('type');
+  // Supabase may include email as 'email' or 'to' in query params
+  const emailFromUrl = searchParams.get('email') || searchParams.get('to');
 
   useEffect(() => {
     const checkToken = async () => {
@@ -77,17 +79,39 @@ const ResetPasswordPageContent = () => {
     setLoading(true);
 
     try {
-      // For password recovery with a token, we need to use verifyOtp with the recovery token
-      const { error } = await supabase.auth.verifyOtp({
-        token: token,
-        type: 'recovery',
-        password: password
-      });
+      // Prefer the new verifyOtp signature: requires identifier (email or phone) for recovery
+      let finalError = null;
 
-      if (error) {
+      // Attempt with email if available
+      if (emailFromUrl) {
+        const { error } = await supabase.auth.verifyOtp({
+          type: 'recovery',
+          token: token || '',
+          email: emailFromUrl,
+          password: password
+        } as any);
+        finalError = error || null;
+      } else {
+        // Fallback: if we already have a session from the recovery link, just updateUser
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const { error } = await supabase.auth.updateUser({ password });
+          finalError = error || null;
+        } else {
+          // As a last resort, try the token-only flow (some backends accept token only)
+          const { error } = await supabase.auth.verifyOtp({
+            type: 'recovery',
+            token: token || '',
+            password: password
+          } as any);
+          finalError = error || null;
+        }
+      }
+
+      if (finalError) {
         toast({
           title: "Error",
-          description: getUserFriendlyError(error.message),
+          description: getUserFriendlyError(finalError.message),
           variant: "destructive",
         });
       } else {
