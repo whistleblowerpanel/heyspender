@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, CheckCircle, Lock, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { getUserFriendlyError } from '@/lib/utils';
 import { supabase } from '@/lib/customSupabaseClient';
 import Navbar from '@/components/layout/Navbar';
@@ -19,6 +19,8 @@ const ResetPasswordPageContent = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isValidToken, setIsValidToken] = useState(null);
   const [checkingToken, setCheckingToken] = useState(true);
   const { resetPassword } = useAuth();
@@ -147,24 +149,25 @@ const ResetPasswordPageContent = () => {
       <>
         <Navbar />
         <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-          <div className="w-full max-w-md p-8 space-y-6 bg-white border-2 border-black">
+          <div className="w-full max-w-md p-8 space-y-6 bg-brand-accent-red text-white border-2 border-black text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="text-center">
-                <div className="w-16 h-16 bg-red-100 flex items-center justify-center border-2 border-black">
-                  <AlertCircle className="w-8 h-8 text-red-600" />
+              <div className="text-center space-y-3">
+                <div className="w-16 h-16 mx-auto bg-white flex items-center justify-center border-2 border-black">
+                  <AlertCircle className="w-8 h-8 text-brand-accent-red" />
                 </div>
-                <h1 className="text-3xl font-bold text-brand-purple-dark mt-4">Invalid Link</h1>
-                <p className="text-gray-600 mt-2">
+                <h1 className="text-3xl font-bold text-white mt-4">Invalid Link</h1>
+                <p className="text-white/90 mt-2">
                   This password reset link is invalid or has expired. Please request a new one.
                 </p>
               </div>
 
               <Link href="/auth/forgot-password">
-                <Button variant="custom" className="w-full bg-brand-orange text-black border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]">
+                {/* @ts-ignore */}
+                <Button variant="custom" className="mt-6 w-full bg-white text-black border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]">
                   Request New Link
                 </Button>
               </Link>
@@ -200,30 +203,54 @@ const ResetPasswordPageContent = () => {
               </div>
 
               <div className="space-y-4">
-                <div>
+                <div className="relative">
                   <Label htmlFor="password">New Password</Label>
-                  <Input 
-                    id="password" 
-                    type="password" 
-                    autoComplete="new-password" 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
-                    required 
-                    className="border-2 border-black"
-                  />
+                  <div className="relative">
+                    <Input 
+                      id="password" 
+                      type={showPassword ? 'text' : 'password'} 
+                      autoComplete="new-password" 
+                      value={password} 
+                      onChange={(e) => setPassword(e.target.value)} 
+                      required 
+                      className="border-2 border-black"
+                    />
+                    {/* @ts-ignore */}
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute right-1 bottom-1 h-7 w-7" 
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
+                    </Button>
+                  </div>
                 </div>
 
-                <div>
+                <div className="relative">
                   <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <Input 
-                    id="confirmPassword" 
-                    type="password" 
-                    autoComplete="new-password" 
-                    value={confirmPassword} 
-                    onChange={(e) => setConfirmPassword(e.target.value)} 
-                    required 
-                    className="border-2 border-black"
-                  />
+                  <div className="relative">
+                    <Input 
+                      id="confirmPassword" 
+                      type={showConfirmPassword ? 'text' : 'password'} 
+                      autoComplete="new-password" 
+                      value={confirmPassword} 
+                      onChange={(e) => setConfirmPassword(e.target.value)} 
+                      required 
+                      className="border-2 border-black"
+                    />
+                    {/* @ts-ignore */}
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute right-1 bottom-1 h-7 w-7" 
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
+                    </Button>
+                  </div>
                 </div>
               </div>
 
