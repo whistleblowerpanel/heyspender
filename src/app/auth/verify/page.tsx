@@ -36,8 +36,10 @@ const VerifyPageContent = () => {
         url: window.location.href
       });
       
-      // Check if user is already verified
-      if (user && user.email_confirmed_at) {
+      // Only show verified status if we have verification parameters
+      // This prevents automatic redirect to homepage
+      if (user && user.email_confirmed_at && (!token && !code)) {
+        console.log('✅ User already verified, showing success page');
         setVerificationStatus('verified');
         return;
       }

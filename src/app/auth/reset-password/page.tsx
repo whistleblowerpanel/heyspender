@@ -30,6 +30,7 @@ const ResetPasswordPageContent = () => {
 
   const token = searchParams.get('token');
   const type = searchParams.get('type');
+  const code = searchParams.get('code'); // Add support for code parameter
   // Supabase may include email as 'email' or 'to' in query params
   const emailFromUrl = searchParams.get('email') || searchParams.get('to');
 
@@ -39,21 +40,41 @@ const ResetPasswordPageContent = () => {
         console.log('🔍 RESET PASSWORD DEBUG - Token Check:', {
           token: token ? token.substring(0, 30) + '...' : 'none',
           type,
+          code: code ? code.substring(0, 30) + '...' : 'none',
           emailFromUrl,
           url: window.location.href
         });
         
-        // Check if we have the required parameters
-        if (!token || type !== 'recovery') {
-          console.log('❌ Missing required parameters:', { token: !!token, type });
+        // Check if we have the required parameters (either token+type or code)
+        if ((!token || type !== 'recovery') && !code) {
+          console.log('❌ Missing required parameters:', { token: !!token, type, code: !!code });
           setIsValidToken(false);
           setCheckingToken(false);
           return;
         }
 
-        // CRITICAL FIX: Handle PKCE codes for password reset
-        // The token might be a PKCE code (starts with pkce_)
-        const pkceCode = token.startsWith('pkce_') ? token : null;
+        // Handle PKCE code flow (new Supabase flow)
+        if (code) {
+          try {
+            console.log('🔄 Using PKCE code for password reset...');
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            
+            if (error) {
+              console.error('❌ PKCE code exchange failed:', error);
+              setIsValidToken(false);
+            } else {
+              console.log('✅ PKCE code exchange successful for password reset');
+              setIsValidToken(true);
+            }
+          } catch (e) {
+            console.error('❌ PKCE code exchange error:', e);
+            setIsValidToken(false);
+          }
+        } else {
+          // Handle traditional token flow
+          // CRITICAL FIX: Handle PKCE codes for password reset
+          // The token might be a PKCE code (starts with pkce_)
+          const pkceCode = token.startsWith('pkce_') ? token : null;
         
         if (pkceCode) {
           try {
