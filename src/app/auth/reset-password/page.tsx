@@ -110,6 +110,7 @@ const ResetPasswordPageContent = () => {
             setIsValidToken(false);
           }
         }
+        }
       } catch (error) {
         console.error('Token check error:', error);
         setIsValidToken(false);
@@ -119,7 +120,7 @@ const ResetPasswordPageContent = () => {
     };
 
     checkToken();
-  }, [token, type]);
+  }, [token, type, code]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
