@@ -94,23 +94,37 @@ const VerifyPageContent = () => {
           console.log('Using PKCE token verification...', { token: token.substring(0, 20) + '...', type });
           
           // Try to use the token as a PKCE code
+          console.log('🔄 Attempting PKCE exchange...');
           const { data, error } = await supabase.auth.exchangeCodeForSession(token);
 
           if (error) {
             console.error('❌ PKCE token verification error:', error);
             // If PKCE fails, try traditional verifyOtp
             console.log('🔄 PKCE failed, trying traditional verifyOtp...');
-            const { data: otpData, error: otpError } = await supabase.auth.verifyOtp({
-              token: token,
-              type: 'signup'
+            // Try direct API call to Supabase auth endpoint
+            console.log('🔄 Trying direct API call to Supabase auth...');
+            
+            const response = await fetch(`https://hgvdslcpndmimatvliyu.supabase.co/auth/v1/verify`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhndmRzbGNwbmRtaW1hdHZsaXl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MzA2NjksImV4cCI6MjA3NTAwNjY2OX0.1d-UszrAW-_rUemrmBEbHRoa1r8zOrbo-wtKaXMPW9k'
+              },
+              body: JSON.stringify({
+                token: token,
+                type: 'signup'
+              })
             });
             
-            if (otpError) {
-              console.error('❌ Traditional verifyOtp also failed:', otpError);
+            const result = await response.json();
+            console.log('Direct API response:', result);
+            
+            if (result.error) {
+              console.error('❌ Direct API call failed:', result.error);
               setVerificationStatus('error');
-              setErrorMessage(`Both PKCE and OTP failed. PKCE Error: ${error.message}. OTP Error: ${otpError.message}`);
+              setErrorMessage(`Direct API Error: ${result.error.message || result.error}`);
             } else {
-              console.log('Traditional verifyOtp successful:', otpData);
+              console.log('✅ Direct API verification successful');
               setVerificationStatus('verified');
               setTimeout(() => {
                 router.push('/dashboard');
