@@ -92,24 +92,47 @@ const ResetPasswordPageContent = () => {
     setLoading(true);
 
     try {
+      console.log('Reset password attempt:', { token, type, emailFromUrl, passwordLength: password.length });
+      
       // After recovery verification, a session should exist; then simply updateUser
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('Current session:', session ? 'exists' : 'none');
+      
       if (!session) {
         // Try to create a session now if email provided
         if (emailFromUrl) {
-          await supabase.auth.verifyOtp({ type: 'recovery', token: token || '', email: emailFromUrl } as any);
+          console.log('Attempting to verify with email:', emailFromUrl);
+          const { error: verifyError } = await supabase.auth.verifyOtp({ 
+            type: 'recovery', 
+            token: token || '', 
+            email: emailFromUrl 
+          } as any);
+          
+          if (verifyError) {
+            console.error('Verify error:', verifyError);
+            toast({
+              title: "Error",
+              description: getUserFriendlyError(verifyError.message),
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
         }
       }
 
+      console.log('Attempting to update password...');
       const { error: updateErr } = await supabase.auth.updateUser({ password });
 
       if (updateErr) {
+        console.error('Update password error:', updateErr);
         toast({
           title: "Error",
           description: getUserFriendlyError(updateErr.message),
           variant: "destructive",
         });
       } else {
+        console.log('Password updated successfully');
         toast({
           title: "Success",
           description: "Password reset successfully! You can now log in with your new password.",
@@ -117,6 +140,7 @@ const ResetPasswordPageContent = () => {
         router.push('/auth/login');
       }
     } catch (error) {
+      console.error('Unexpected error:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
