@@ -35,58 +35,107 @@ const VerifyPageContent = () => {
         return;
       }
 
-      // New PKCE flow: handle code parameter
-      if (code) {
+       // Handle PKCE codes (new flow)
+       if (code) {
+         try {
+           setVerificationStatus('checking');
+           console.log('Exchanging PKCE code for session...', { code: code.substring(0, 20) + '...' });
+           
+           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+           
+           if (error) {
+             console.error('PKCE code exchange error:', error);
+             setVerificationStatus('error');
+             setErrorMessage(error.message || 'Verification failed');
+           } else {
+             console.log('PKCE code exchanged successfully:', data);
+             setVerificationStatus('verified');
+             
+             // Update user verification status in database
+             if (data.user) {
+               try {
+                 await supabase
+                   .from('users')
+                   .update({ 
+                     email_verified_at: new Date().toISOString(),
+                     is_active: true 
+                   })
+                   .eq('id', data.user.id);
+                 console.log('✅ User verification status updated in database');
+               } catch (dbError) {
+                 console.error('❌ Error updating user verification status:', dbError);
+               }
+             }
+             
+             // Redirect to dashboard after successful verification
+             setTimeout(() => {
+               router.push('/dashboard');
+             }, 2000);
+           }
+         } catch (error) {
+           console.error('PKCE verification error:', error);
+           setVerificationStatus('error');
+           setErrorMessage('An unexpected error occurred during verification');
+         }
+         return;
+       }
+
+      // Handle PKCE tokens (legacy format with pkce_ prefix)
+      if (token && token.startsWith('pkce_') && type === 'signup') {
         try {
           setVerificationStatus('checking');
-          console.log('Exchanging code for session...');
+          console.log('Using PKCE token verification...', { token: token.substring(0, 20) + '...', type });
           
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          
+          // Try to use the token as a PKCE code
+          const { data, error } = await supabase.auth.exchangeCodeForSession(token);
+
           if (error) {
-            console.error('Code exchange error:', error);
-            setVerificationStatus('error');
-            setErrorMessage(error.message || 'Verification failed');
+            console.error('PKCE token verification error:', error);
+            // If PKCE fails, try traditional verifyOtp
+            console.log('PKCE failed, trying traditional verifyOtp...');
+            const { data: otpData, error: otpError } = await supabase.auth.verifyOtp({
+              token: token,
+              type: 'signup'
+            });
+            
+            if (otpError) {
+              console.error('Traditional verifyOtp also failed:', otpError);
+              setVerificationStatus('error');
+              setErrorMessage(otpError.message || 'Verification failed');
+            } else {
+              console.log('Traditional verifyOtp successful:', otpData);
+              setVerificationStatus('verified');
+              setTimeout(() => {
+                router.push('/dashboard');
+              }, 2000);
+            }
           } else {
-            console.log('Code exchanged successfully');
+            console.log('PKCE token verification successful:', data);
             setVerificationStatus('verified');
-            // Refresh the auth state
+            
+            // Update user verification status in database
+            if (data.user) {
+              try {
+                await supabase
+                  .from('users')
+                  .update({ 
+                    email_verified_at: new Date().toISOString(),
+                    is_active: true 
+                  })
+                  .eq('id', data.user.id);
+                console.log('✅ User verification status updated in database');
+              } catch (dbError) {
+                console.error('❌ Error updating user verification status:', dbError);
+              }
+            }
+            
+            // Redirect to dashboard after successful verification
             setTimeout(() => {
-              window.location.reload();
+              router.push('/dashboard');
             }, 2000);
           }
         } catch (error) {
-          console.error('Code exchange error:', error);
-          setVerificationStatus('error');
-          setErrorMessage('An unexpected error occurred during verification');
-        }
-        return;
-      }
-
-      // Handle legacy token flow (fallback for old-style links)
-      if (token && type === 'signup' && !code) {
-        try {
-          setVerificationStatus('checking');
-          console.log('Using legacy token verification...', { token: token.substring(0, 20) + '...', type });
-          
-          // For legacy tokens, we need to use exchangeCodeForSession with the token
-          // The token in the URL is actually a PKCE code disguised as a token
-          const { error } = await supabase.auth.exchangeCodeForSession(token);
-
-          if (error) {
-            console.error('Legacy token verification error:', error);
-            setVerificationStatus('error');
-            setErrorMessage(error.message || 'Verification failed');
-          } else {
-            console.log('Legacy token verification successful');
-            setVerificationStatus('verified');
-            // Refresh the auth state
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000);
-          }
-        } catch (error) {
-          console.error('Legacy verification error:', error);
+          console.error('PKCE token verification error:', error);
           setVerificationStatus('error');
           setErrorMessage('An unexpected error occurred during verification');
         }
@@ -96,7 +145,7 @@ const VerifyPageContent = () => {
     };
 
     handleVerification();
-  }, [token, type, code, user]);
+  }, [token, type, code, user, router]);
 
   const handleContinueContributing = async () => {
     setIsCheckingSession(true);
