@@ -19,32 +19,48 @@ const ResetPasswordPageContent = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isValidSession, setIsValidSession] = useState(null);
-  const [checkingSession, setCheckingSession] = useState(true);
+  const [isValidToken, setIsValidToken] = useState(null);
+  const [checkingToken, setCheckingToken] = useState(true);
   const { resetPassword } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
+  const token = searchParams.get('token');
+  const type = searchParams.get('type');
+
   useEffect(() => {
-    const checkSession = async () => {
+    const checkToken = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error || !session) {
-          setIsValidSession(false);
+        // Check if we have the required parameters
+        if (!token || type !== 'recovery') {
+          setIsValidToken(false);
+          setCheckingToken(false);
+          return;
+        }
+
+        // Verify the token by attempting to verify it
+        const { error } = await supabase.auth.verifyOtp({
+          token: token,
+          type: 'recovery'
+        });
+
+        if (error) {
+          console.error('Token verification error:', error);
+          setIsValidToken(false);
         } else {
-          setIsValidSession(true);
+          setIsValidToken(true);
         }
       } catch (error) {
-        setIsValidSession(false);
+        console.error('Token check error:', error);
+        setIsValidToken(false);
       } finally {
-        setCheckingSession(false);
+        setCheckingToken(false);
       }
     };
 
-    checkSession();
-  }, []);
+    checkToken();
+  }, [token, type]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -69,26 +85,53 @@ const ResetPasswordPageContent = () => {
 
     setLoading(true);
 
-    const { error } = await resetPassword(password);
+    try {
+      // First verify the token again to ensure it's still valid
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        token: token,
+        type: 'recovery'
+      });
 
-    if (error) {
+      if (verifyError) {
+        toast({
+          title: "Error",
+          description: "Reset link has expired. Please request a new one.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Now update the password
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: getUserFriendlyError(error.message),
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Password reset successfully! You can now log in with your new password.",
+        });
+        router.push('/auth/login');
+      }
+    } catch (error) {
       toast({
         title: "Error",
-        description: getUserFriendlyError(error.message),
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Success",
-        description: "Password reset successfully! You can now log in with your new password.",
-      });
-      router.push('/auth/login');
     }
     
     setLoading(false);
   };
 
-  if (checkingSession) {
+  if (checkingToken) {
     return (
       <>
         <Navbar />
@@ -96,7 +139,7 @@ const ResetPasswordPageContent = () => {
           <div className="w-full max-w-md p-8 space-y-6 bg-white border-2 border-black">
             <div className="text-center">
               <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-              <p className="text-gray-600">Checking session...</p>
+              <p className="text-gray-600">Verifying reset link...</p>
             </div>
           </div>
         </div>
@@ -105,7 +148,7 @@ const ResetPasswordPageContent = () => {
     );
   }
 
-  if (!isValidSession) {
+  if (!isValidToken) {
     return (
       <>
         <Navbar />
