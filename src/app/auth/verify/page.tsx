@@ -27,7 +27,14 @@ const VerifyPageContent = () => {
   // Handle email verification when page loads with token or code
   useEffect(() => {
     const handleVerification = async () => {
-      console.log('Verification attempt:', { token, type, code, email });
+      console.log('🔍 VERIFICATION DEBUG - Full Details:', { 
+        token: token ? token.substring(0, 30) + '...' : null,
+        type, 
+        code: code ? code.substring(0, 30) + '...' : null,
+        email,
+        user: user ? { id: user.id, email: user.email, email_confirmed_at: user.email_confirmed_at } : null,
+        url: window.location.href
+      });
       
       // Check if user is already verified
       if (user && user.email_confirmed_at) {
@@ -43,10 +50,10 @@ const VerifyPageContent = () => {
            
            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
            
-           if (error) {
-             console.error('PKCE code exchange error:', error);
-             setVerificationStatus('error');
-             setErrorMessage(error.message || 'Verification failed');
+          if (error) {
+            console.error('❌ PKCE code exchange error:', error);
+            setVerificationStatus('error');
+            setErrorMessage(`PKCE Code Error: ${error.message || 'Verification failed'}`);
            } else {
              console.log('PKCE code exchanged successfully:', data);
              setVerificationStatus('verified');
@@ -90,18 +97,18 @@ const VerifyPageContent = () => {
           const { data, error } = await supabase.auth.exchangeCodeForSession(token);
 
           if (error) {
-            console.error('PKCE token verification error:', error);
+            console.error('❌ PKCE token verification error:', error);
             // If PKCE fails, try traditional verifyOtp
-            console.log('PKCE failed, trying traditional verifyOtp...');
+            console.log('🔄 PKCE failed, trying traditional verifyOtp...');
             const { data: otpData, error: otpError } = await supabase.auth.verifyOtp({
               token: token,
               type: 'signup'
             });
             
             if (otpError) {
-              console.error('Traditional verifyOtp also failed:', otpError);
+              console.error('❌ Traditional verifyOtp also failed:', otpError);
               setVerificationStatus('error');
-              setErrorMessage(otpError.message || 'Verification failed');
+              setErrorMessage(`Both PKCE and OTP failed. PKCE Error: ${error.message}. OTP Error: ${otpError.message}`);
             } else {
               console.log('Traditional verifyOtp successful:', otpData);
               setVerificationStatus('verified');

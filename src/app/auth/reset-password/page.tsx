@@ -36,27 +36,59 @@ const ResetPasswordPageContent = () => {
   useEffect(() => {
     const checkToken = async () => {
       try {
+        console.log('🔍 RESET PASSWORD DEBUG - Token Check:', {
+          token: token ? token.substring(0, 30) + '...' : 'none',
+          type,
+          emailFromUrl,
+          url: window.location.href
+        });
+        
         // Check if we have the required parameters
         if (!token || type !== 'recovery') {
+          console.log('❌ Missing required parameters:', { token: !!token, type });
           setIsValidToken(false);
           setCheckingToken(false);
           return;
         }
 
-        // If the email is present, proactively verify to establish a session
-        // so that updateUser can succeed without calling verify during submit
-        if (emailFromUrl) {
+        // CRITICAL FIX: Handle PKCE codes for password reset
+        // The token might be a PKCE code (starts with pkce_)
+        const pkceCode = token.startsWith('pkce_') ? token : null;
+        
+        if (pkceCode) {
           try {
-            await supabase.auth.verifyOtp({
-              type: 'recovery',
-              token: token,
-              email: emailFromUrl
-            } as any);
+            console.log('Exchanging PKCE code for password reset session...');
+            const { data, error } = await supabase.auth.exchangeCodeForSession(pkceCode);
+            
+            if (error) {
+              console.error('PKCE code exchange error:', error);
+              setIsValidToken(false);
+            } else {
+              console.log('PKCE code exchanged successfully for password reset');
+              setIsValidToken(true);
+            }
           } catch (e) {
-            // ignore; user can still try submit which will report error
+            console.error('PKCE verification error:', e);
+            setIsValidToken(false);
+          }
+        } else {
+          // Handle traditional token flow
+          try {
+            console.log('Using traditional token verification for password reset...');
+            const { data, error } = await supabase.auth.exchangeCodeForSession(token);
+            
+            if (error) {
+              console.error('Token verification error:', error);
+              setIsValidToken(false);
+            } else {
+              console.log('Token verification successful for password reset');
+              setIsValidToken(true);
+            }
+          } catch (e) {
+            console.error('Token verification error:', e);
+            setIsValidToken(false);
           }
         }
-        setIsValidToken(true);
       } catch (error) {
         console.error('Token check error:', error);
         setIsValidToken(false);
@@ -70,6 +102,15 @@ const ResetPasswordPageContent = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    console.log('🔍 RESET PASSWORD DEBUG - Form Data:', {
+      password: password ? `[${password.length} chars]` : 'empty',
+      confirmPassword: confirmPassword ? `[${confirmPassword.length} chars]` : 'empty',
+      token: token ? token.substring(0, 30) + '...' : 'none',
+      type,
+      emailFromUrl,
+      url: window.location.href
+    });
     
     if (password !== confirmPassword) {
       toast({
@@ -92,43 +133,29 @@ const ResetPasswordPageContent = () => {
     setLoading(true);
 
     try {
-      console.log('Reset password attempt:', { token, type, emailFromUrl, passwordLength: password.length });
+      console.log('🔄 Reset password attempt:', { token, type, emailFromUrl, passwordLength: password.length });
       
-      // After recovery verification, a session should exist; then simply updateUser
+      // Check if we have a valid session from the token verification
       const { data: { session } } = await supabase.auth.getSession();
       console.log('Current session:', session ? 'exists' : 'none');
       
       if (!session) {
-        // Try to create a session now if email provided
-        if (emailFromUrl) {
-          console.log('Attempting to verify with email:', emailFromUrl);
-          const { error: verifyError } = await supabase.auth.verifyOtp({ 
-            type: 'recovery', 
-            token: token || '', 
-            email: emailFromUrl 
-          } as any);
-          
-          if (verifyError) {
-            console.error('Verify error:', verifyError);
-            toast({
-              title: "Error",
-              description: getUserFriendlyError(verifyError.message),
-              variant: "destructive",
-            });
-            setLoading(false);
-            return;
-          }
-        }
+        toast({
+          title: "Error",
+          description: "Invalid or expired reset link. Please request a new password reset.",
+          variant: "destructive",
+        });
+        return;
       }
 
       console.log('Attempting to update password...');
       const { error: updateErr } = await supabase.auth.updateUser({ password });
 
       if (updateErr) {
-        console.error('Update password error:', updateErr);
+        console.error('❌ Update password error:', updateErr);
         toast({
           title: "Error",
-          description: getUserFriendlyError(updateErr.message),
+          description: `Password Update Error: ${updateErr.message}`,
           variant: "destructive",
         });
       } else {

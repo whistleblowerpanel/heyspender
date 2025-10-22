@@ -15,9 +15,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
     autoRefreshToken: true,
-    // Mobile-specific settings
-    flowType: 'pkce', // Better for mobile
-    debug: true // Set to true for debugging
+    // PKCE flow settings for better security and mobile support
+    flowType: 'pkce',
+    debug: false, // Set to false for production
+    // Additional PKCE settings
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: 'supabase.auth.token'
   }
 });
 
