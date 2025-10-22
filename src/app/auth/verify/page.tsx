@@ -63,47 +63,12 @@ const VerifyPageContent = () => {
         return;
       }
 
-      // Legacy token flow
-      if (token && type === 'signup') {
-        try {
-          setVerificationStatus('checking');
-          console.log('Using legacy token verification...');
-          
-          // Try different verification methods
-          let verificationResult = null;
-          
-          // Method 1: Try with token
-          verificationResult = await supabase.auth.verifyOtp({
-            token: token,
-            type: 'signup'
-          });
-
-          // Method 2: If that fails, try with token_hash
-          if (verificationResult.error && verificationResult.error.message.includes('token')) {
-            console.log('Trying with token_hash...');
-            verificationResult = await supabase.auth.verifyOtp({
-              token_hash: token,
-              type: 'signup'
-            });
-          }
-
-          if (verificationResult.error) {
-            console.error('Verification error:', verificationResult.error);
-            setVerificationStatus('error');
-            setErrorMessage(verificationResult.error.message || 'Verification failed');
-          } else {
-            console.log('Token verification successful');
-            setVerificationStatus('verified');
-            // Refresh the auth state
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000);
-          }
-        } catch (error) {
-          console.error('Verification error:', error);
-          setVerificationStatus('error');
-          setErrorMessage('An unexpected error occurred during verification');
-        }
+      // If we have a token but no code, it's likely a malformed URL
+      // In Supabase's new PKCE flow, verification should always come with a code
+      if (token && !code) {
+        console.log('Token present but no code - this might be a malformed verification URL');
+        setVerificationStatus('error');
+        setErrorMessage('Invalid verification link. Please check your email for the correct verification link.');
       } else if (!token && !code) {
         setVerificationStatus('pending');
       }
