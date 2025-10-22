@@ -418,78 +418,65 @@ const WishlistPageClient = ({ initialWishlist }: { initialWishlist?: any }) => {
             </section>
           )}
 
-          <section className="mb-12">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-3xl font-bold text-brand-purple-dark">Wishlist Items</h2>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant={viewMode === 'grid' ? 'custom' : 'outline'} 
-                  className={`h-9 w-9 p-0 border-2 border-black ${
-                    viewMode === 'grid' 
-                      ? 'bg-brand-purple-dark text-white shadow-[-4px_4px_0px_#161B47]' 
-                      : 'border-gray-300'
-                  }`}
-                  onClick={() => setViewMode('grid')}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                    <rect width="18" height="18" x="3" y="3" rx="2"></rect>
-                    <path d="M3 12h18"></path>
-                    <path d="M12 3v18"></path>
-                  </svg>
-                </Button>
-                <Button 
-                  variant={viewMode === 'list' ? 'custom' : 'outline'} 
-                  className={`h-9 w-9 p-0 border-2 border-black ${
-                    viewMode === 'list' 
-                      ? 'bg-brand-purple-dark text-white shadow-[-4px_4px_0px_#161B47]' 
-                      : 'border-gray-300'
-                  }`}
-                  onClick={() => setViewMode('list')}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                    <line x1="8" x2="21" y1="6" y2="6"></line>
-                    <line x1="8" x2="21" y1="12" y2="12"></line>
-                    <line x1="8" x2="21" y1="18" y2="18"></line>
-                    <line x1="3" x2="3.01" y1="6" y2="6"></line>
-                    <line x1="3" x2="3.01" y1="12" y2="12"></line>
-                    <line x1="3" x2="3.01" y1="18" y2="18"></line>
-                  </svg>
-                </Button>
-              </div>
-            </div>
-            
-            {itemsLoading ? (
-              <div className="text-center py-16 px-8">
-                <Loader2 className="mx-auto h-12 w-12 animate-spin text-brand-purple-dark" />
-                <p className="mt-4 text-gray-600">Loading wishlist items...</p>
-              </div>
-            ) : items.length > 0 ? (
-              <>
-                <div className={viewMode === 'grid' ? 'space-y-4 lg:grid lg:grid-cols-4 lg:gap-6 lg:space-y-0' : 'space-y-4'}>
-                  {currentItems.map((item: any) => (
-                    <ItemCard 
-                      key={item.id} 
-                      item={item} 
-                      onClaimed={fetchWishlistData} 
-                      username={username} 
-                      slug={slug} 
-                      viewMode={viewMode} 
-                    />
-                  ))}
+          {!itemsLoading && items.length > 0 && (
+            <section className="mb-12">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-3xl font-bold text-brand-purple-dark">Wishlist Items</h2>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant={viewMode === 'grid' ? 'custom' : 'outline'} 
+                    className={`h-9 w-9 p-0 border-2 border-black ${
+                      viewMode === 'grid' 
+                        ? 'bg-brand-purple-dark text-white shadow-[-4px_4px_0px_#161B47]' 
+                        : 'border-gray-300'
+                    }`}
+                    onClick={() => setViewMode('grid')}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                      <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+                      <path d="M3 12h18"></path>
+                      <path d="M12 3v18"></path>
+                    </svg>
+                  </Button>
+                  <Button 
+                    variant={viewMode === 'list' ? 'custom' : 'outline'} 
+                    className={`h-9 w-9 p-0 border-2 border-black ${
+                      viewMode === 'list' 
+                        ? 'bg-brand-purple-dark text-white shadow-[-4px_4px_0px_#161B47]' 
+                        : 'border-gray-300'
+                    }`}
+                    onClick={() => setViewMode('list')}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                      <line x1="8" x2="21" y1="6" y2="6"></line>
+                      <line x1="8" x2="21" y1="12" y2="12"></line>
+                      <line x1="8" x2="21" y1="18" y2="18"></line>
+                      <line x1="3" x2="3.01" y1="6" y2="6"></line>
+                      <line x1="3" x2="3.01" y1="12" y2="12"></line>
+                      <line x1="3" x2="3.01" y1="18" y2="18"></line>
+                    </svg>
+                  </Button>
                 </div>
-                
-                <div className="text-center mt-6 text-sm text-gray-600">
-                  Showing {startIndex + 1} to {Math.min(endIndex, items.length)} of {items.length} items
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-16 px-8 border-2 border-dashed border-gray-300">
-                <Info className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-4 text-xl font-semibold">No items yet</h3>
-                <p className="mt-2 text-sm text-gray-500">The creator hasn't added any items to this wishlist.</p>
               </div>
-            )}
-          </section>
+              
+              <div className={viewMode === 'grid' ? 'space-y-4 lg:grid lg:grid-cols-4 lg:gap-6 lg:space-y-0' : 'space-y-4'}>
+                {currentItems.map((item: any) => (
+                  <ItemCard 
+                    key={item.id} 
+                    item={item} 
+                    onClaimed={fetchWishlistData} 
+                    username={username} 
+                    slug={slug} 
+                    viewMode={viewMode} 
+                  />
+                ))}
+              </div>
+              
+              <div className="text-center mt-6 text-sm text-gray-600">
+                Showing {startIndex + 1} to {Math.min(endIndex, items.length)} of {items.length} items
+              </div>
+            </section>
+          )}
         </main>
       </div>
       <Footer />

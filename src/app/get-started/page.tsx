@@ -533,18 +533,32 @@ const GetStartedContent = () => {
                   variant="purple"
                   value={watch('cover_image_url')}
                   onFileSelect={async (file) => {
-                    if (!user?.id) {
-                      console.error('User not authenticated');
-                      return;
-                    }
-                    
                     setUploading(true);
                     try {
-                      const { imageService } = await import('@/lib/wishlistService');
-                      const url = await imageService.uploadCoverImage(file, user.id);
-                      setValue('cover_image_url', url);
+                      // If user is authenticated, upload to server
+                      if (user?.id) {
+                        const { imageService } = await import('@/lib/wishlistService');
+                        const url = await imageService.uploadCoverImage(file, user.id);
+                        setValue('cover_image_url', url);
+                      } else {
+                        // For unauthenticated users, store as blob URL temporarily
+                        // This will be uploaded when they complete registration
+                        const blobUrl = URL.createObjectURL(file);
+                        setValue('cover_image_url', blobUrl);
+                        
+                        // Store the file object in localStorage for later upload
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64data = reader.result;
+                          localStorage.setItem('wizardCoverImage', base64data as string);
+                          localStorage.setItem('wizardCoverImageName', file.name);
+                          localStorage.setItem('wizardCoverImageType', file.type);
+                        };
+                        reader.readAsDataURL(file);
+                      }
                     } catch (error) {
                       console.error('Upload failed:', error);
+                      // Fallback to blob URL
                       setValue('cover_image_url', URL.createObjectURL(file));
                     } finally {
                       setUploading(false);

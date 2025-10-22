@@ -179,7 +179,7 @@ const Navbar = () => {
                 <Button onClick={() => router.push('/auth/login')} variant="custom" className="bg-brand-green text-black cursor-pointer">
                   <span>Login</span>
                 </Button>
-                <Button onClick={() => router.push('/auth/register')} variant="custom" className="bg-brand-orange text-black cursor-pointer">
+                <Button onClick={() => router.push('/get-started')} variant="custom" className="bg-brand-orange text-black cursor-pointer">
                   <span>Create Wishlist</span>
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -347,7 +347,7 @@ const Navbar = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.35, type: 'spring', stiffness: 150 }}
                         onClick={() => {
-                          router.push('/auth/register');
+                          router.push('/get-started');
                           setMobileMenuOpen(false);
                         }}
                         className="w-full flex items-center justify-center space-x-2 py-4 px-6 bg-brand-orange hover:bg-brand-orange/90 transition-all duration-300 active:scale-[0.98] border-2 border-black group"

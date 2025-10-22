@@ -17,7 +17,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     // Mobile-specific settings
     flowType: 'pkce', // Better for mobile
-    debug: false // Set to true for debugging
+    debug: true // Set to true for debugging
   }
 });
 

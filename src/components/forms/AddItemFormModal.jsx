@@ -129,21 +129,41 @@ const AddItemFormModal = ({ isOpen, onClose, onSave, type = 'item', initialData 
                   <Label className="text-white text-sm sm:text-base">Wishlist Item Image</Label>
                   <div className="mt-1">
                     <FileUpload 
-                      variant="purple"
+                      variant="dark"
                       value={formData.image}
                       onFileSelect={async (file) => {
-                        if (!user?.id) {
-                          console.error('User not authenticated');
-                          return;
-                        }
-                        
                         setUploading(true);
                         try {
-                          const { imageService } = await import('@/lib/wishlistService');
-                          const url = await imageService.uploadItemImage(file, user.id);
-                          updateFormData({ image: url });
+                          // If user is authenticated, upload to server
+                          if (user?.id) {
+                            const { imageService } = await import('@/lib/wishlistService');
+                            const url = await imageService.uploadItemImage(file, user.id);
+                            updateFormData({ image: url });
+                          } else {
+                            // For unauthenticated users, store as blob URL temporarily
+                            const blobUrl = URL.createObjectURL(file);
+                            updateFormData({ image: blobUrl });
+                            
+                            // Store file data for later upload
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              // Store with a unique key based on file name and timestamp
+                              const imageKey = `wizardItemImage_${Date.now()}_${file.name}`;
+                              localStorage.setItem(imageKey, reader.result);
+                              localStorage.setItem(`${imageKey}_name`, file.name);
+                              localStorage.setItem(`${imageKey}_type`, file.type);
+                              
+                              // Store the key with the blob URL so we can match it later
+                              updateFormData({ 
+                                image: blobUrl,
+                                imageStorageKey: imageKey 
+                              });
+                            };
+                            reader.readAsDataURL(file);
+                          }
                         } catch (error) {
                           console.error('Upload failed:', error);
+                          // Fallback to blob URL
                           updateFormData({ image: URL.createObjectURL(file) });
                         } finally {
                           setUploading(false);

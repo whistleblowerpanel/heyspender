@@ -61,8 +61,11 @@ const emailTypes = {
 
 **Step 2: Configure Confirm Signup Template**
 
+**CRITICAL: Use this EXACT template with brutalist design matching HeySpender branding**
+
 ```html
 <!-- EXACT Supabase Confirm Signup Template - NO MODIFICATIONS -->
+<!-- Source: email-templates/confirm-signup-final.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -70,121 +73,184 @@ const emailTypes = {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Confirm Your Email - HeySpender</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #1f2937;
-            background-color: #f9fafb;
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
-        .container {
-            max-width: 600px;
-            margin: 40px auto;
-            background-color: #ffffff;
-            border: 2px solid #161B47;
-        }
-        .header {
-            background: linear-gradient(135deg, #7c3bed 0%, #5b21b6 100%);
-            color: white;
-            padding: 40px 30px;
-            text-align: center;
-        }
-        .header h1 {
-            margin: 0 0 10px 0;
-            font-size: 32px;
-            font-weight: 700;
-        }
-        .content {
-            padding: 40px 30px;
-        }
-        .title-section {
-            font-size: 24px;
-            font-weight: 700;
+        
+        body {
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
             color: #161B47;
-            margin-bottom: 20px;
-            text-align: center;
+            background-color: #FDF4E8;
+            margin: 0;
+            padding: 20px;
         }
+        
+        .email-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border: 2px solid #000000;
+            padding: 0;
+        }
+        
+        .header {
+            text-align: right;
+            margin-bottom: 0;
+            background-color: #7c3bed;
+            padding: 20px 32px 10px 32px;
+            border-bottom: 2px solid #000000;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+        }
+        
+        .logo img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .title-section {
+            color: #161B47;
+            font-size: 36px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+        
+        .content {
+            margin-bottom: 0;
+            padding: 20px 32px 20px 32px;
+        }
+        
         .greeting {
             font-size: 18px;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 15px;
+            font-weight: 500;
+            color: #161B47;
+            margin-bottom: 20px;
         }
+        
         .message {
             font-size: 16px;
-            color: #4b5563;
-            margin-bottom: 25px;
+            color: #4a5568;
+            margin-bottom: 24px;
             line-height: 1.7;
         }
-        .button-container {
-            text-align: center;
-            margin: 35px 0;
-        }
+        
         .confirm-button {
             display: inline-block;
-            background-color: #86E589;
-            color: #161B47;
+            background-color: #E98144;
+            color: #000000;
             text-decoration: none;
-            padding: 16px 40px;
-            font-size: 18px;
-            font-weight: 700;
-            border: 2px solid #161B47;
-            box-shadow: -4px 4px 0px 0px rgba(22, 27, 71, 1);
-            transition: all 0.2s;
-        }
-        .confirm-button:hover {
-            box-shadow: -6px 6px 0px 0px rgba(22, 27, 71, 1);
-            transform: translate(-1px, -1px);
-        }
-        .alternative-link {
-            background-color: #f3f4f6;
-            padding: 20px;
-            margin: 25px 0;
-            font-size: 14px;
-            color: #6b7280;
+            padding: 12px 24px;
+            font-weight: 600;
+            font-size: 16px;
             text-align: center;
+            margin: 20px 0;
+            border: 2px solid #000000;
+            box-shadow: -4px 4px 0px #000000;
+            transition: all 0.2s ease;
         }
+        
+        .confirm-button:hover {
+            background-color: #d9733a;
+            transform: translate(-2px, 2px);
+            box-shadow: -2px 2px 0px #000000;
+        }
+        
+        .security-notice {
+            background-color: #E94B29;
+            border: 2px solid #000000;
+            padding: 20px;
+            margin: 24px 0;
+            box-shadow: -4px 4px 0px #000000;
+        }
+        
+        .security-notice h3 {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .security-notice p {
+            color: #ffffff;
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        .alternative-link {
+            background-color: #FDF4E8;
+            border: 2px solid #000000;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: -4px 4px 0px #000000;
+        }
+        
+        .alternative-link p {
+            color: #4a5568;
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
         .alternative-link a {
             color: #7c3bed;
             word-break: break-all;
-        }
-        .security-notice {
-            background-color: #fef3c7;
-            border-left: 4px solid #FFA500;
-            padding: 20px;
-            margin: 25px 0;
-        }
-        .security-notice h3 {
-            margin: 0 0 10px 0;
-            font-size: 16px;
-            color: #161B47;
-        }
-        .security-notice p {
-            margin: 0;
             font-size: 14px;
-            color: #4b5563;
+            text-decoration: none;
         }
+        
         .footer {
-            background-color: #f9fafb;
-            padding: 30px;
             text-align: center;
-            font-size: 14px;
-            color: #6b7280;
-            border-top: 2px solid #e5e7eb;
+            border-top: 2px solid #000000;
+            padding: 24px 32px;
         }
+        
+        .footer p {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 4px 0;
+        }
+        
         .footer a {
             color: #7c3bed;
             text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .button-container {
+            text-align: center;
+            margin: 24px 0;
+        }
+        
+        @media (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+            }
+            
+            .confirm-button {
+                display: block;
+                width: 100%;
+                text-align: center;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="email-container">
         <!-- Header -->
         <div class="header">
-            <h1>🎉 Welcome to HeySpender!</h1>
-            <p>One last step to get started...</p>
+            <div class="logo">
+                <img src="https://heyspender.com/HeySpender%20Media/General/HeySpender%20Logoo.webp" alt="HeySpender" />
+            </div>
         </div>
         
         <!-- Main Content -->
@@ -206,7 +272,7 @@ const emailTypes = {
             </div>
             
             <div class="security-notice">
-                <h3>🔒 Security Notice</h3>
+                <h3>Security Notice</h3>
                 <p>This confirmation link will expire in <strong>24 hours</strong> for your security. If you didn't create this account, please ignore this email.</p>
             </div>
             
@@ -218,15 +284,23 @@ const emailTypes = {
         <!-- Footer -->
         <div class="footer">
             <p><strong>Need help?</strong> <a href="mailto:support@heyspender.com">Contact Support</a></p>
-            <p style="margin-top: 10px; font-size: 12px; color: #9ca3af;">
-                © HeySpender • Made with ❤️ by ExpressCreo<br>
-                Do not share this link with anyone.
+            <p style="margin-top: 2px; font-size: 12px; color: #9ca3af;">
+                © HeySpender • Do not share this link with anyone.
             </p>
         </div>
     </div>
 </body>
 </html>
 ```
+
+**Key Design Features:**
+- ✅ **Space Grotesk Font**: Matches website branding
+- ✅ **Cream Background**: #FDF4E8 (brand cream color)
+- ✅ **Purple Header**: #7c3bed with logo right-aligned
+- ✅ **Orange Button**: #E98144 with black border and shadow
+- ✅ **Red Security Notice**: #E94B29 with white text
+- ✅ **Brutalist Shadows**: -4px 4px 0px #000000
+- ✅ **NO BORDER RADIUS**: Sharp corners throughout
 
 ### **2.2 Email Settings Configuration**
 
@@ -242,6 +316,39 @@ Email Confirmation Template: [Use template above]
 Magic Link Template: [Optional]
 Change Email Template: [Optional]
 Reset Password Template: [Configure separately]
+```
+
+### **2.3 Redirect URLs Configuration**
+
+**CRITICAL: Configure these EXACT redirect URLs in Supabase Dashboard**
+
+**In Supabase Dashboard → Authentication → URL Configuration:**
+
+```
+Site URL: https://heyspender.com
+Redirect URLs: 
+  - https://heyspender.com/auth/confirm
+  - https://heyspender.com/auth/callback
+  - http://localhost:3000/auth/confirm (for development)
+  - http://localhost:3001/auth/confirm (for development)
+  - http://localhost:3005/auth/confirm (for development)
+```
+
+**In Your Code:**
+```typescript
+// EXACT emailRedirectTo configuration - NO MODIFICATIONS
+const signUpPayload = {
+  email,
+  password,
+  options: {
+    data: {
+      username,
+      full_name,
+      role: 'user',
+    },
+    emailRedirectTo: 'https://heyspender.com/auth/confirm'
+  },
+};
 ```
 
 ### **2.3 SMTP Configuration**
@@ -783,6 +890,8 @@ export default VerifyPage;
 
 ### **5.3 Email Confirmation Handler Page**
 
+**CRITICAL: This page handles mobile verification links with special timeout and retry logic**
+
 ```tsx
 // EXACT confirmation handler page - NO MODIFICATIONS
 'use client';
@@ -790,38 +899,117 @@ export default VerifyPage;
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/customSupabaseClient';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { EmailService } from '@/lib/emailService';
-import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 
 const AuthConfirmPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('returnTo');
   const { toast } = useToast();
   const [verificationStatus, setVerificationStatus] = useState('verifying');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    const handleEmailConfirmation = async () => {
+    // CRITICAL: 15-second timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (verificationStatus === 'verifying') {
+        console.error('⏰ Verification timeout - redirecting to login');
+        setVerificationStatus('error');
+        setErrorMessage('Verification is taking too long. Please try logging in again.');
+        toast({ 
+          variant: 'destructive', 
+          title: 'Verification Timeout', 
+          description: 'Please try logging in again.' 
+        });
+        setTimeout(() => navigate('/login'), 3000);
+      }
+    }, 15000);
+
+    const handleAuthConfirm = async () => {
       try {
-        console.log('🔐 Processing email confirmation...');
-
-        // Get the session from Supabase
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-        if (sessionError || !session?.user) {
-          console.error('❌ No valid session found:', sessionError);
+        console.log('🔍 Starting mobile-friendly verification process...');
+        console.log('📱 Current URL:', window.location.href);
+        console.log('🔗 URL hash:', window.location.hash);
+        console.log('🔍 URL search:', window.location.search);
+        
+        // CRITICAL: Mobile browsers need special URL fragment handling
+        const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        
+        // First attempt: Get session immediately
+        let { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        // CRITICAL: Mobile retry logic - wait 1 second if no session
+        if (!session && !sessionError) {
+          console.log('⏳ No session found, waiting for mobile browser to process...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          const retryResult = await supabase.auth.getSession();
+          session = retryResult.data.session;
+          sessionError = retryResult.error;
+        }
+        
+        // CRITICAL: Try URL fragment processing for mobile email links
+        if (!session && !sessionError) {
+          console.log('🔗 Checking for URL fragments from email link...');
+          const hash = window.location.hash;
+          const search = window.location.search;
+          
+          if (hash || search) {
+            console.log('📧 Found URL parameters, processing email verification...');
+            
+            try {
+              // Method 1: Let Supabase handle URL fragments
+              const { data, error } = await supabase.auth.getSession();
+              if (data.session) {
+                session = data.session;
+                console.log('✅ Session found via URL fragment processing');
+              }
+              
+              // Method 2: Refresh page context for mobile
+              if (!session) {
+                console.log('🔄 Trying page refresh for mobile session...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                const refreshResult = await supabase.auth.getSession();
+                if (refreshResult.data.session) {
+                  session = refreshResult.data.session;
+                  console.log('✅ Session found after refresh');
+                }
+              }
+            } catch (fragmentError) {
+              console.error('❌ Error processing URL fragments:', fragmentError);
+            }
+          }
+        }
+        
+        if (sessionError) {
+          console.error('❌ Session error:', sessionError);
           setVerificationStatus('error');
-          toast({
-            variant: 'destructive',
-            title: 'Verification Failed',
-            description: 'Unable to verify your email. Please try clicking the link again.'
+          setErrorMessage('Authentication failed. Please try logging in again.');
+          toast({ 
+            variant: 'destructive', 
+            title: 'Authentication failed', 
+            description: 'Could not retrieve session. Please try logging in.' 
           });
+          setTimeout(() => navigate('/login'), 3000);
+          return;
+        }
+        
+        if (!session) {
+          console.error('❌ No session found after all attempts');
+          setVerificationStatus('error');
+          setErrorMessage('No active session found. Please try the verification link again or log in.');
+          toast({ 
+            variant: 'destructive', 
+            title: 'Verification failed', 
+            description: 'No active session found. Please try the verification link again.' 
+          });
+          setTimeout(() => navigate('/login'), 3000);
           return;
         }
 
-        console.log('✅ Valid session found for user:', session.user.email);
+        console.log('✅ Session found, processing verification for:', session.user.email);
 
         // Update user record to mark email as verified
         try {
