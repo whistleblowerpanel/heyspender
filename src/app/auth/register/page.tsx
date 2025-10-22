@@ -127,6 +127,20 @@ const RegisterPageContent = () => {
         }
       });
 
+      console.log('🔍 Registration Response:', { 
+        user: data?.user ? { 
+          id: data.user.id, 
+          email: data.user.email, 
+          email_confirmed_at: data.user.email_confirmed_at,
+          created_at: data.user.created_at,
+          confirmed_at: data.user.confirmed_at,
+          email_confirm_change_at: data.user.email_confirm_change_at,
+          email_confirm_sent_at: data.user.email_confirm_sent_at
+        } : null,
+        error: error?.message,
+        session: data?.session ? 'Session created' : 'No session'
+      });
+
       if (error) {
         toast({
           title: "Error",
@@ -181,18 +195,32 @@ const RegisterPageContent = () => {
           // Don't fail the registration, just log the error
         }
         
-        // If user was automatically signed in, sign them out so they need to verify email
+        // Check if user was auto-confirmed (configuration issue)
         if (data.user.email_confirmed_at) {
-          console.log('🔒 Signing out automatically confirmed user to require email verification');
+          console.error('❌ CRITICAL: User was auto-confirmed during registration - Supabase email confirmation is not working');
+          console.log('🔍 This means Supabase is not requiring email verification');
+          
+          // Sign out the auto-confirmed user immediately
           await supabase.auth.signOut();
+          
+          toast({
+            title: "Configuration Issue",
+            description: "Email confirmation is not properly configured in Supabase. Please contact support.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
         }
 
+        // User should NOT be confirmed yet - they need to verify email
+        console.log('✅ User created successfully and requires email verification');
+        
         // Handle wizard data if it exists
         await handleWizardData(data.user.id);
         
         toast({
-          title: "Success",
-          description: "Account created successfully! Please check your email to verify your account.",
+          title: "Registration Successful!",
+          description: "Please check your email for the verification link.",
         });
 
         // Redirect to verification page
