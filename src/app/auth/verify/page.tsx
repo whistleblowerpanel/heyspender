@@ -63,12 +63,34 @@ const VerifyPageContent = () => {
         return;
       }
 
-      // If we have a token but no code, it's likely a malformed URL
-      // In Supabase's new PKCE flow, verification should always come with a code
-      if (token && !code) {
-        console.log('Token present but no code - this might be a malformed verification URL');
-        setVerificationStatus('error');
-        setErrorMessage('Invalid verification link. Please check your email for the correct verification link.');
+      // Handle legacy token flow (fallback for old-style links)
+      if (token && type === 'signup' && !code) {
+        try {
+          setVerificationStatus('checking');
+          console.log('Using legacy token verification...');
+          
+          const { error } = await supabase.auth.verifyOtp({
+            token: token,
+            type: 'signup'
+          });
+
+          if (error) {
+            console.error('Legacy token verification error:', error);
+            setVerificationStatus('error');
+            setErrorMessage(error.message || 'Verification failed');
+          } else {
+            console.log('Legacy token verification successful');
+            setVerificationStatus('verified');
+            // Refresh the auth state
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          }
+        } catch (error) {
+          console.error('Legacy verification error:', error);
+          setVerificationStatus('error');
+          setErrorMessage('An unexpected error occurred during verification');
+        }
       } else if (!token && !code) {
         setVerificationStatus('pending');
       }
