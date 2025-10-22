@@ -41,8 +41,19 @@ const ResetPasswordPageContent = () => {
           return;
         }
 
-        // For password recovery, we just need to check if the token exists
-        // The actual validation happens when we submit the form
+        // If the email is present, proactively verify to establish a session
+        // so that updateUser can succeed without calling verify during submit
+        if (emailFromUrl) {
+          try {
+            await supabase.auth.verifyOtp({
+              type: 'recovery',
+              token: token,
+              email: emailFromUrl
+            } as any);
+          } catch (e) {
+            // ignore; user can still try submit which will report error
+          }
+        }
         setIsValidToken(true);
       } catch (error) {
         console.error('Token check error:', error);
@@ -79,39 +90,21 @@ const ResetPasswordPageContent = () => {
     setLoading(true);
 
     try {
-      // Prefer the new verifyOtp signature: requires identifier (email or phone) for recovery
-      let finalError = null;
-
-      // Attempt with email if available
-      if (emailFromUrl) {
-        const { error } = await supabase.auth.verifyOtp({
-          type: 'recovery',
-          token: token || '',
-          email: emailFromUrl,
-          password: password
-        } as any);
-        finalError = error || null;
-      } else {
-        // Fallback: if we already have a session from the recovery link, just updateUser
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          const { error } = await supabase.auth.updateUser({ password });
-          finalError = error || null;
-        } else {
-          // As a last resort, try the token-only flow (some backends accept token only)
-          const { error } = await supabase.auth.verifyOtp({
-            type: 'recovery',
-            token: token || '',
-            password: password
-          } as any);
-          finalError = error || null;
+      // After recovery verification, a session should exist; then simply updateUser
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // Try to create a session now if email provided
+        if (emailFromUrl) {
+          await supabase.auth.verifyOtp({ type: 'recovery', token: token || '', email: emailFromUrl } as any);
         }
       }
 
-      if (finalError) {
+      const { error: updateErr } = await supabase.auth.updateUser({ password });
+
+      if (updateErr) {
         toast({
           title: "Error",
-          description: getUserFriendlyError(finalError.message),
+          description: getUserFriendlyError(updateErr.message),
           variant: "destructive",
         });
       } else {
