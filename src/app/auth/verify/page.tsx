@@ -67,12 +67,11 @@ const VerifyPageContent = () => {
       if (token && type === 'signup' && !code) {
         try {
           setVerificationStatus('checking');
-          console.log('Using legacy token verification...');
+          console.log('Using legacy token verification...', { token: token.substring(0, 20) + '...', type });
           
-          const { error } = await supabase.auth.verifyOtp({
-            token: token,
-            type: 'signup'
-          });
+          // For legacy tokens, we need to use exchangeCodeForSession with the token
+          // The token in the URL is actually a PKCE code disguised as a token
+          const { error } = await supabase.auth.exchangeCodeForSession(token);
 
           if (error) {
             console.error('Legacy token verification error:', error);
