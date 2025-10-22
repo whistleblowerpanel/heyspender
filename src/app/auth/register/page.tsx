@@ -119,6 +119,7 @@ const RegisterPageContent = () => {
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/verify`,
           data: {
             full_name: full_name,
             username: username
@@ -133,6 +134,11 @@ const RegisterPageContent = () => {
           variant: "destructive",
         });
       } else if (data?.user) {
+        // Check if user is automatically confirmed (this shouldn't happen with email confirmation enabled)
+        if (data.user.email_confirmed_at) {
+          console.warn('⚠️ User was automatically confirmed during registration - this should not happen with email confirmation enabled');
+        }
+        
         // Create user record in database
         try {
           const { error: userError } = await supabase
@@ -154,6 +160,12 @@ const RegisterPageContent = () => {
         } catch (error) {
           console.error('Error creating user record:', error);
           // Don't fail the registration, just log the error
+        }
+        
+        // If user was automatically signed in, sign them out so they need to verify email
+        if (data.user.email_confirmed_at) {
+          console.log('🔒 Signing out automatically confirmed user to require email verification');
+          await supabase.auth.signOut();
         }
 
         // Handle wizard data if it exists
