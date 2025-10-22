@@ -155,7 +155,26 @@ const RegisterPageContent = () => {
 
           if (userError) {
             console.error('Error creating user record:', userError);
-            // Don't fail the registration, just log the error
+            // If it's a duplicate key error, try to update instead
+            if (userError.code === '23505') {
+              console.log('User record already exists, updating instead...');
+              const { error: updateError } = await supabase
+                .from('users')
+                .update({
+                  email: email,
+                  full_name: full_name,
+                  username: username,
+                  role: 'user',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', data.user.id);
+              
+              if (updateError) {
+                console.error('Error updating user record:', updateError);
+              } else {
+                console.log('User record updated successfully');
+              }
+            }
           }
         } catch (error) {
           console.error('Error creating user record:', error);
