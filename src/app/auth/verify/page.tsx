@@ -22,19 +22,52 @@ const VerifyPageContent = () => {
   const returnTo = searchParams.get('returnTo') || searchParams.get('redirect_to');
   const token = searchParams.get('token');
   const type = searchParams.get('type');
+  const code = searchParams.get('code');
 
-  // Handle email verification when page loads with token
+  // Handle email verification when page loads with token or code
   useEffect(() => {
     const handleVerification = async () => {
+      console.log('Verification attempt:', { token, type, code, email });
+      
       // Check if user is already verified
       if (user && user.email_confirmed_at) {
         setVerificationStatus('verified');
         return;
       }
 
+      // New PKCE flow: handle code parameter
+      if (code) {
+        try {
+          setVerificationStatus('checking');
+          console.log('Exchanging code for session...');
+          
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (error) {
+            console.error('Code exchange error:', error);
+            setVerificationStatus('error');
+            setErrorMessage(error.message || 'Verification failed');
+          } else {
+            console.log('Code exchanged successfully');
+            setVerificationStatus('verified');
+            // Refresh the auth state
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          }
+        } catch (error) {
+          console.error('Code exchange error:', error);
+          setVerificationStatus('error');
+          setErrorMessage('An unexpected error occurred during verification');
+        }
+        return;
+      }
+
+      // Legacy token flow
       if (token && type === 'signup') {
         try {
           setVerificationStatus('checking');
+          console.log('Using legacy token verification...');
           
           // Try different verification methods
           let verificationResult = null;
@@ -59,21 +92,25 @@ const VerifyPageContent = () => {
             setVerificationStatus('error');
             setErrorMessage(verificationResult.error.message || 'Verification failed');
           } else {
+            console.log('Token verification successful');
             setVerificationStatus('verified');
-            // Don't reload immediately, let the user see the success message
+            // Refresh the auth state
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
           }
         } catch (error) {
           console.error('Verification error:', error);
           setVerificationStatus('error');
           setErrorMessage('An unexpected error occurred during verification');
         }
-      } else if (!token) {
+      } else if (!token && !code) {
         setVerificationStatus('pending');
       }
     };
 
     handleVerification();
-  }, [token, type, user]);
+  }, [token, type, code, user]);
 
   const handleContinueContributing = async () => {
     setIsCheckingSession(true);
