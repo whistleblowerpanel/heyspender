@@ -19,7 +19,8 @@ import {
   Eye,
   Trash2,
   Archive,
-  ArchiveRestore
+  ArchiveRestore,
+  RotateCcw
 } from 'lucide-react';
 import { 
   Dialog, 
@@ -659,6 +660,87 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
     }
   };
 
+  const handleMarkAsPurchased = async () => {
+    try {
+      // Simply update amount_paid to the full estimated price (same as "I bought this item already")
+      // Status remains 'confirmed', not 'fulfilled'
+      const { error: updateError } = await supabase
+        .from('claims')
+        .update({ 
+          amount_paid: estimatedPrice,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', claim.id);
+      
+      if (updateError) {
+        console.error('Error updating amount_paid:', updateError);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to update payment amount'
+        });
+        return;
+      }
+
+      // Refresh the claim data
+      if (onUpdateClaim) {
+        await onUpdateClaim(claim.id, {});
+      }
+
+      toast({
+        title: 'Item Marked as Purchased!',
+        description: `"${item.name}" has been marked as fully paid.`
+      });
+    } catch (error) {
+      console.error('Error in handleMarkAsPurchased:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to mark item as purchased'
+      });
+    }
+  };
+
+  const handleRevertPayment = async () => {
+    try {
+      // Simply reset amount_paid back to 0
+      const { error: updateError } = await supabase
+        .from('claims')
+        .update({ 
+          amount_paid: 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', claim.id);
+      
+      if (updateError) {
+        console.error('Error reverting payment:', updateError);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to revert payment'
+        });
+        return;
+      }
+
+      // Refresh the claim data
+      if (onUpdateClaim) {
+        await onUpdateClaim(claim.id, {});
+      }
+
+      toast({
+        title: 'Payment Reverted!',
+        description: `"${item.name}" payment has been reset. You can now update it again.`
+      });
+    } catch (error) {
+      console.error('Error in handleRevertPayment:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to revert payment'
+      });
+    }
+  };
+
   // Client-side only calculations to prevent hydration mismatches
   const [isExpired, setIsExpired] = React.useState(false);
   const [daysUntilExpiry, setDaysUntilExpiry] = React.useState(null);
@@ -707,23 +789,24 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
                 <Edit3 className="mr-2 h-4 w-4" />
                 {claim?.note ? 'Edit Note' : 'Add Note'}
               </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleAddToCalendar}
+                disabled={isFullyPaid}
+                className={isFullyPaid ? 'text-gray-400 cursor-not-allowed' : ''}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                Add to Calendar
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              {!isFullyPaid && claim?.status === 'pending' && (
-                <DropdownMenuItem onClick={() => onUpdateStatus && onUpdateStatus(claim.id, 'confirmed')}>
+              {!isFullyPaid ? (
+                <DropdownMenuItem onClick={handleMarkAsPurchased}>
                   <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Confirm
+                  Purchased
                 </DropdownMenuItem>
-              )}
-              {!isFullyPaid && claim?.status === 'confirmed' && (
-                <DropdownMenuItem onClick={() => onUpdateStatus && onUpdateStatus(claim.id, 'fulfilled')}>
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Mark Fulfilled
-                </DropdownMenuItem>
-              )}
-              {!isFullyPaid && claim?.status === 'pending' && (
-                <DropdownMenuItem onClick={() => onUpdateStatus && onUpdateStatus(claim.id, 'cancelled')}>
-                  <X className="mr-2 h-4 w-4" />
-                  Cancel
+              ) : (
+                <DropdownMenuItem onClick={handleRevertPayment}>
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Revert Payment
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
@@ -836,28 +919,16 @@ const SpenderListCard = ({ claim, onUpdateStatus, onUpdateClaim, onDelete, onVie
             )}
           </div>
 
-          <div className="flex gap-2">
-            <Button
-              onClick={() => setShowReminderDialog(true)}
-              variant={savedReminderDateTime && !isFullyPaid ? "default" : "outline"}
-              size="sm"
-              className={`flex-1 ${isFullyPaid ? 'bg-gray-300 text-gray-600 hover:bg-gray-300 border-gray-300' : savedReminderDateTime ? (databaseReminder ? 'bg-brand-purple-dark text-white hover:bg-brand-purple-dark/90' : 'bg-brand-purple-dark text-white hover:bg-brand-purple-dark/90') : ''}`}
-              disabled={isFullyPaid}
-            >
-              <Clock className="w-4 h-4 mr-2" />
-              {isFullyPaid ? 'Fully Paid' : (savedReminderDateTime ? (databaseReminder ? `Auto: ${reminderCountdown}` : reminderCountdown) : 'Reminder')}
-            </Button>
-            <Button
-              onClick={handleAddToCalendar}
-              variant="outline"
-              size="sm"
-              className={`flex-1 ${isFullyPaid ? 'bg-gray-300 text-gray-600 hover:bg-gray-300 border-gray-300' : ''}`}
-              disabled={isFullyPaid}
-            >
-              <CalendarIcon className="w-4 h-4 mr-2" />
-              {isFullyPaid ? 'Fully Paid' : 'Calendar'}
-            </Button>
-          </div>
+          <Button
+            onClick={() => setShowReminderDialog(true)}
+            variant={savedReminderDateTime && !isFullyPaid ? "default" : "outline"}
+            size="sm"
+            className={`w-full ${isFullyPaid ? 'bg-gray-300 text-gray-600 hover:bg-gray-300 border-gray-300' : savedReminderDateTime ? (databaseReminder ? 'bg-brand-purple-dark text-white hover:bg-brand-purple-dark/90' : 'bg-brand-purple-dark text-white hover:bg-brand-purple-dark/90') : ''}`}
+            disabled={isFullyPaid}
+          >
+            <Clock className="w-4 h-4 mr-2" />
+            {isFullyPaid ? 'Fully Paid' : (savedReminderDateTime ? (databaseReminder ? `Auto: ${reminderCountdown}` : reminderCountdown) : 'Reminder')}
+          </Button>
         </div>
 
         {/* Meta */}

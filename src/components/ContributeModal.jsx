@@ -51,8 +51,8 @@ const ContributeModal = ({ goal, recipientEmail, onContributed, trigger }) => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Check verification status locally
-  const userIsVerified = user?.email_confirmed_at !== null && user?.email_confirmed_at !== undefined;
+  // Email verification is disabled - all users are considered verified
+  const userIsVerified = true;
   
   // Also check if user is logged in (has a valid session)
   const [hasValidSession, setHasValidSession] = useState(false);
@@ -71,14 +71,11 @@ const ContributeModal = ({ goal, recipientEmail, onContributed, trigger }) => {
   // Refresh user state when modal opens
   useEffect(() => {
     if (open) {
-      // Force refresh user session to get latest verification status
+      // Force refresh user session to get latest status
       supabase.auth.getSession().then(({ data: { session } }) => {
         console.log('Modal opened - Fresh session:', { 
           userId: session?.user?.id, 
           email: session?.user?.email, 
-          isVerified: isVerified,
-          userIsVerified: userIsVerified,
-          emailConfirmedAt: session?.user?.email_confirmed_at,
           hasSession: !!session,
           sessionUser: session?.user
         });
@@ -381,7 +378,7 @@ const ContributeModal = ({ goal, recipientEmail, onContributed, trigger }) => {
             {(user || hasValidSession) ? 
               (userIsVerified ? 
                 'Your contribution will help reach the goal. Secure payment powered by Paystack.' :
-                'Your contribution will help reach the goal. Please verify your email to access your dashboard. Secure payment powered by Paystack.'
+                'Your contribution will help reach the goal. Secure payment powered by Paystack.'
               ) :
               'Anyone can contribute to help reach this goal! No account required. Secure payment powered by Paystack.'
             }
@@ -407,16 +404,6 @@ const ContributeModal = ({ goal, recipientEmail, onContributed, trigger }) => {
           {(user || hasValidSession) ? (
             // Logged in user - show display name and anonymous option
             <>
-              {(!userIsVerified && (user || hasValidSession)) && (
-                <div className="bg-yellow-50 border-2 border-yellow-200 p-3 mb-4">
-                  <div className="flex items-center">
-                    <Info className="w-4 h-4 text-yellow-600 mr-2" />
-                    <p className="text-sm text-yellow-800">
-                      <strong>Email verification pending:</strong> You can make contributions, but please check your email to verify your account for full access.
-                    </p>
-                  </div>
-                </div>
-              )}
               <div>
                 <Label htmlFor="displayName" className="text-sm font-medium">Display Name (Optional)</Label>
                 <Input 

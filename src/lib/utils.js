@@ -92,6 +92,23 @@ export function getUserFriendlyError(error, context = 'performing this action') 
 		return 'Your session has expired. Please log in again.';
 	}
 
+	// Password reset specific errors
+	if (errorMessage.includes('User not found')) {
+		return 'No account found with that email address.';
+	}
+
+	if (errorMessage.includes('Invalid token') || errorMessage.includes('invalid_token')) {
+		return 'This reset link is invalid or has expired. Please request a new one.';
+	}
+
+	if (errorMessage.includes('Token expired') || errorMessage.includes('token_expired')) {
+		return 'This reset link has expired. Please request a new one.';
+	}
+
+	if (errorMessage.includes('Password is too weak') || errorMessage.includes('password_too_weak')) {
+		return 'Password must be at least 8 characters long.';
+	}
+
 	// Permission errors
 	if (errorMessage.includes('permission denied') || errorMessage.includes('insufficient_privilege') || errorCode === '42501') {
 		return 'You don\'t have permission to perform this action.';

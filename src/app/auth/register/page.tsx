@@ -98,17 +98,87 @@ const RegisterPageContent = () => {
     const { full_name, username, email, password } = formData;
 
     try {
+      // Validate input format before checking database
+      if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+        toast({
+          title: "Invalid Username",
+          description: "Username must be 3-20 characters and contain only letters, numbers, and underscores.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (password.length < 8) {
+        toast({
+          title: "Weak Password",
+          description: "Password must be at least 8 characters long.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (full_name.trim().length < 2) {
+        toast({
+          title: "Invalid Name",
+          description: "Please enter your full name (at least 2 characters).",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       // Check if username is already taken
-      const { data: existingUser } = await supabase
+      const { data: existingUser, error: usernameCheckError } = await supabase
         .from('users')
         .select('username')
         .eq('username', username)
-        .single();
+        .maybeSingle();
+
+      if (usernameCheckError) {
+        console.error('Error checking username availability:', usernameCheckError);
+        toast({
+          title: "Error",
+          description: "Unable to verify username availability. Please try again.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
 
       if (existingUser) {
         toast({
           title: "Error",
           description: "Username is already taken. Please choose another one.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Check if email is already registered and verified
+      const { data: existingEmailUser, error: emailCheckError } = await supabase
+        .from('users')
+        .select('id, email, email_verified_at, is_active')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (emailCheckError) {
+        console.error('Error checking email availability:', emailCheckError);
+        toast({
+          title: "Error",
+          description: "Unable to verify email availability. Please try again.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (existingEmailUser && existingEmailUser.email_verified_at) {
+        toast({
+          title: "Error",
+          description: "This email is already registered and verified. Please use a different email or try logging in.",
           variant: "destructive",
         });
         setLoading(false);
@@ -153,7 +223,7 @@ const RegisterPageContent = () => {
           console.warn('⚠️ User was automatically confirmed during registration - this should not happen with email confirmation enabled');
         }
         
-        // Create user record in database
+        // Create or update user record in database
         try {
           const { error: userError } = await supabase
             .from('users')
@@ -163,12 +233,13 @@ const RegisterPageContent = () => {
               full_name: full_name,
               username: username,
               role: 'user',
+              is_active: true, // Active immediately since email confirmation is disabled
+              email_verified_at: new Date().toISOString(), // Mark as verified immediately
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             });
 
           if (userError) {
-            console.error('Error creating user record:', userError);
             // If it's a duplicate key error, try to update instead
             if (userError.code === '23505') {
               console.log('User record already exists, updating instead...');
@@ -179,53 +250,89 @@ const RegisterPageContent = () => {
                   full_name: full_name,
                   username: username,
                   role: 'user',
+                  email_verified_at: new Date().toISOString(), // Mark as verified immediately
+                  is_active: true, // Active immediately since email confirmation is disabled
                   updated_at: new Date().toISOString()
                 })
                 .eq('id', data.user.id);
               
               if (updateError) {
-                console.error('Error updating user record:', updateError);
+                console.error('❌ Error updating user record:', updateError);
+                // This is critical - can't proceed without user record
+                await supabase.auth.signOut();
+                toast({
+                  title: "Registration Error",
+                  description: "Failed to update your account profile. Please try again.",
+                  variant: "destructive",
+                });
+                setLoading(false);
+                return;
               } else {
-                console.log('User record updated successfully');
+                console.log('✅ User record updated successfully - verification status reset');
               }
+            } else {
+              // Non-duplicate error is critical
+              console.error('❌ Critical error creating user record:', userError);
+              await supabase.auth.signOut();
+              toast({
+                title: "Registration Error",
+                description: "Failed to create your account profile. Please try again.",
+                variant: "destructive",
+              });
+              setLoading(false);
+              return;
             }
+          } else {
+            console.log('✅ User record created successfully');
           }
+
+          // Verify the user record was created/updated successfully
+          const { data: verifyUser, error: verifyError } = await supabase
+            .from('users')
+            .select('id, username, email, full_name')
+            .eq('id', data.user.id)
+            .single();
+
+          if (verifyError || !verifyUser) {
+            console.error('❌ User record verification failed:', verifyError);
+            // Clean up auth user
+            await supabase.auth.signOut();
+            toast({
+              title: "Registration Error",
+              description: "Failed to verify your account profile. Please try again.",
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+
+          console.log('✅ User record verified in database:', verifyUser.username);
         } catch (error) {
-          console.error('Error creating user record:', error);
-          // Don't fail the registration, just log the error
-        }
-        
-        // Check if user was auto-confirmed (configuration issue)
-        if (data.user.email_confirmed_at) {
-          console.error('❌ CRITICAL: User was auto-confirmed during registration - Supabase email confirmation is not working');
-          console.log('🔍 This means Supabase is not requiring email verification');
-          
-          // Sign out the auto-confirmed user immediately
+          console.error('❌ Exception creating user record:', error);
+          // Clean up auth user
           await supabase.auth.signOut();
-          
           toast({
-            title: "Configuration Issue",
-            description: "Email confirmation is not properly configured in Supabase. Please contact support.",
+            title: "Registration Error",
+            description: "An unexpected error occurred. Please try again.",
             variant: "destructive",
           });
           setLoading(false);
           return;
         }
-
-        // User should NOT be confirmed yet - they need to verify email
-        console.log('✅ User created successfully and requires email verification');
+        
+        // User is automatically signed in (email confirmation disabled)
+        console.log('✅ User created successfully and automatically signed in');
         
         // Handle wizard data if it exists
         await handleWizardData(data.user.id);
         
         toast({
           title: "Registration Successful!",
-          description: "Please check your email for the verification link.",
+          description: "Welcome to HeySpender! You're now signed in.",
         });
 
-        // Redirect to verification page
-        const verificationUrl = `/auth/verify?email=${encodeURIComponent(email)}${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ''}`;
-        router.push(verificationUrl);
+        // Redirect directly to dashboard - no email verification needed
+        router.push(returnTo || '/dashboard/wishlist');
       }
     } catch (error) {
       console.error('Registration error:', error);

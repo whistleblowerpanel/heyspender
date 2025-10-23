@@ -200,7 +200,7 @@ export class EmailService {
     </ul>
     
     <div style="text-align: center; margin: 25px 0;">
-      <a href="${typeof window !== 'undefined' ? window.location.origin : 'https://heyspender.com'}/dashboard" 
+      <a href="${typeof window !== 'undefined' ? window.location.origin : 'https://heyspender.com'}/dashboard/wishlist" 
          style="display: inline-block; background-color: #FF6B35; color: white; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold;">
         Get Started
       </a>
@@ -232,7 +232,7 @@ With HeySpender, you can:
 - Track your contributions and see the impact you make
 - Get notified when items are purchased
 
-Get started: ${typeof window !== 'undefined' ? window.location.origin : 'https://heyspender.com'}/dashboard
+Get started: ${typeof window !== 'undefined' ? window.location.origin : 'https://heyspender.com'}/dashboard/wishlist
 
 Happy celebrating!
 The HeySpender Team
@@ -496,7 +496,7 @@ HeySpender Admin Dashboard
     </div>
     
     <div style="text-align: center; margin: 25px 0;">
-      <a href="${typeof window !== 'undefined' ? window.location.origin : 'https://heyspender.com'}/dashboard" 
+      <a href="${typeof window !== 'undefined' ? window.location.origin : 'https://heyspender.com'}/dashboard/wishlist" 
          style="display: inline-block; background-color: #FF6B35; color: white; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold;">
         View Dashboard
       </a>
@@ -526,7 +526,7 @@ Amount: ₦${Number(payoutData.amount).toLocaleString()}
 Status: ${oldStatus} → ${newStatus}
 Request ID: ${payoutData.id}
 
-View Dashboard: ${typeof window !== 'undefined' ? window.location.origin : 'https://heyspender.com'}/dashboard
+View Dashboard: ${typeof window !== 'undefined' ? window.location.origin : 'https://heyspender.com'}/dashboard/wishlist
 
 Need help? Contact Support: support@heyspender.com
 

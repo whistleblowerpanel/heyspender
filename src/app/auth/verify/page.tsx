@@ -29,13 +29,11 @@ const VerifyPageContent = () => {
   // Handle email verification when page loads with token or code
   useEffect(() => {
     const handleVerification = async () => {
-      console.log('🔍 VERIFICATION DEBUG - Full Details:', { 
-        token: token ? token.substring(0, 30) + '...' : null,
-        type, 
-        code: code ? code.substring(0, 30) + '...' : null,
-        email,
-        user: user ? { id: user.id, email: user.email, email_confirmed_at: user.email_confirmed_at } : null,
-        url: window.location.href
+      console.log('🔍 VERIFICATION DEBUG:', { 
+        hasToken: !!token,
+        hasCode: !!code,
+        hasEmail: !!email,
+        userVerified: user?.email_confirmed_at ? 'yes' : 'no'
       });
       
       // Only show verified status if we have verification parameters
@@ -52,15 +50,102 @@ const VerifyPageContent = () => {
            setVerificationStatus('checking');
            console.log('Exchanging PKCE code for session...', { code: code.substring(0, 20) + '...' });
            
+           // Try the standard PKCE exchange first
            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
            
           if (error) {
             console.error('❌ PKCE code exchange error:', error);
-            setVerificationStatus('error');
-            setErrorMessage(`PKCE Code Error: ${error.message || 'Verification failed'}`);
+            
+            // If PKCE exchange fails due to missing code_verifier, try OTP verification
+            if (error.message?.includes('code verifier') || error.message?.includes('non-empty')) {
+              console.log('🔄 PKCE code_verifier missing, trying OTP verification...');
+              
+              try {
+                const { data: otpData, error: otpError } = await supabase.auth.verifyOtp({
+                  token_hash: code,
+                  type: 'signup'
+                });
+                
+                if (otpError) {
+                  console.error('❌ OTP verification failed:', otpError);
+                  
+                  // If OTP also fails, try direct token verification
+                  console.log('🔄 OTP failed, trying direct token verification...');
+                  try {
+                    const { data: tokenData, error: tokenError } = await supabase.auth.verifyOtp({
+                      token: code,
+                      type: 'signup',
+                      email: email || 'test2@whistleblower.ng'
+                    });
+                    
+                    if (tokenError) {
+                      console.error('❌ Direct token verification failed:', tokenError);
+                      
+                      // All verification methods failed - this is likely an expired link
+                      console.log('🔄 All verification methods failed - link likely expired');
+                      setVerificationStatus('error');
+                      setErrorMessage('The verification link has expired or is invalid. Please request a new one.');
+                    } else {
+                      console.log('✅ Direct token verification successful:', tokenData);
+                      
+                      // Update user verification status in database
+                      if (tokenData.user) {
+                        try {
+                          await supabase
+                            .from('users')
+                            .update({ 
+                              email_verified_at: new Date().toISOString(),
+                              is_active: true 
+                            })
+                            .eq('id', tokenData.user.id);
+                          console.log('✅ User verification status updated in database');
+                        } catch (dbError) {
+                          console.error('❌ Error updating user verification status:', dbError);
+                        }
+                      }
+                      
+                      // Redirect immediately to dashboard - no intermediate page
+                      router.push('/dashboard/wishlist');
+                    }
+                  } catch (tokenError) {
+                    console.error('❌ Direct token verification error:', tokenError);
+                    setVerificationStatus('error');
+                    setErrorMessage('The verification link has expired or is invalid. Please request a new one.');
+                  }
+                } else {
+                  console.log('✅ OTP verification successful:', otpData);
+                  
+                  // Update user verification status in database
+                  if (otpData.user) {
+                    try {
+                      await supabase
+                        .from('users')
+                        .update({ 
+                          email_verified_at: new Date().toISOString(),
+                          is_active: true 
+                        })
+                        .eq('id', otpData.user.id);
+                      console.log('✅ User verification status updated in database');
+                    } catch (dbError) {
+                      console.error('❌ Error updating user verification status:', dbError);
+                    }
+                  }
+                  
+                  // Redirect immediately to dashboard - no intermediate page
+                  router.push('/dashboard/wishlist');
+                }
+              } catch (otpError) {
+                console.error('❌ OTP verification error:', otpError);
+                setVerificationStatus('error');
+                setErrorMessage('The verification link has expired or is invalid. Please request a new one.');
+              }
+            } else {
+              // Other PKCE errors
+              setVerificationStatus('error');
+              setErrorMessage(`Verification failed: ${error.message || 'Please request a new verification link.'}`);
+            }
            } else {
              console.log('PKCE code exchanged successfully:', data);
-             setVerificationStatus('verified');
              
              // Update user verification status in database
              if (data.user) {
@@ -78,10 +163,8 @@ const VerifyPageContent = () => {
                }
              }
              
-             // Redirect to dashboard after successful verification
-             setTimeout(() => {
-               router.push('/dashboard');
-             }, 2000);
+             // Redirect immediately to dashboard - no intermediate page
+             router.push('/dashboard/wishlist');
            }
          } catch (error) {
            console.error('PKCE verification error:', error);
@@ -103,40 +186,11 @@ const VerifyPageContent = () => {
 
           if (error) {
             console.error('❌ PKCE token verification error:', error);
-            // If PKCE fails, try traditional verifyOtp
-            console.log('🔄 PKCE failed, trying traditional verifyOtp...');
-            // Try direct API call to Supabase auth endpoint
-            console.log('🔄 Trying direct API call to Supabase auth...');
-            
-            const response = await fetch(`https://hgvdslcpndmimatvliyu.supabase.co/auth/v1/verify`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhndmRzbGNwbmRtaW1hdHZsaXl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MzA2NjksImV4cCI6MjA3NTAwNjY2OX0.1d-UszrAW-_rUemrmBEbHRoa1r8zOrbo-wtKaXMPW9k'
-              },
-              body: JSON.stringify({
-                token: token,
-                type: 'signup'
-              })
-            });
-            
-            const result = await response.json();
-            console.log('Direct API response:', result);
-            
-            if (result.error) {
-              console.error('❌ Direct API call failed:', result.error);
-              setVerificationStatus('error');
-              setErrorMessage(`Direct API Error: ${result.error.message || result.error}`);
-            } else {
-              console.log('✅ Direct API verification successful');
-              setVerificationStatus('verified');
-              setTimeout(() => {
-                router.push('/dashboard');
-              }, 2000);
-            }
+            // If PKCE exchange fails, this token may be invalid or expired
+            setVerificationStatus('error');
+            setErrorMessage('The verification link has expired or is invalid. Please request a new one.');
           } else {
-            console.log('PKCE token verification successful:', data);
-            setVerificationStatus('verified');
+            console.log('✅ PKCE token verification successful:', data);
             
             // Update user verification status in database
             if (data.user) {
@@ -154,13 +208,11 @@ const VerifyPageContent = () => {
               }
             }
             
-            // Redirect to dashboard after successful verification
-            setTimeout(() => {
-              router.push('/dashboard');
-            }, 2000);
+            // Redirect immediately to dashboard - no intermediate page
+            router.push('/dashboard/wishlist');
           }
         } catch (error) {
-          console.error('PKCE token verification error:', error);
+          console.error('❌ PKCE token verification error:', error);
           setVerificationStatus('error');
           setErrorMessage('An unexpected error occurred during verification');
         }
@@ -177,7 +229,7 @@ const VerifyPageContent = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        router.push(returnTo || '/dashboard');
+        router.push(returnTo || '/dashboard/wishlist');
       } else {
         router.push('/auth/login');
       }
@@ -194,7 +246,7 @@ const VerifyPageContent = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        router.push('/dashboard');
+        router.push('/dashboard/wishlist');
       } else {
         router.push('/auth/login');
       }
@@ -206,11 +258,27 @@ const VerifyPageContent = () => {
     }
   };
 
+
   const handleResendVerification = async () => {
+    // Try to get email from URL params or use a fallback
+    const emailToUse = email || 'test2@whistleblower.ng'; // Fallback for testing
+    
+    // Validate email is present
+    if (!emailToUse) {
+      toast({
+        title: "Error",
+        description: "Email address is missing. Please try registering again.",
+        variant: "destructive",
+      });
+      router.push('/auth/register');
+      return;
+    }
+
     try {
+      console.log('Resending verification email to:', emailToUse);
       const { error } = await supabase.auth.resend({
         type: 'signup',
-        email: email || 'whistleblowerpanel@gmail.com'
+        email: emailToUse
       });
       
       if (error) {
@@ -221,6 +289,7 @@ const VerifyPageContent = () => {
           variant: "destructive",
         });
       } else {
+        console.log('✅ Verification email resent successfully');
         toast({
           title: "Verification Email Sent",
           description: "Please check your email for the verification link.",
@@ -264,7 +333,7 @@ const VerifyPageContent = () => {
                 type="button"
                 variant="custom" 
                 className="bg-brand-green text-black border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]" 
-                onClick={() => router.push(returnTo || '/dashboard')}
+                onClick={() => router.push(returnTo || '/dashboard/wishlist')}
               >
                 Go to Dashboard
               </Button>
@@ -313,38 +382,32 @@ const VerifyPageContent = () => {
             <MailCheck className="w-16 h-16 mx-auto text-brand-green" />
             <h1 className="text-3xl font-bold text-white">Check Your Inbox!</h1>
             <p className="text-white/90">
-              We've sent a verification link to your email address. Please click the link to confirm your account.
+              Please check your email for a verification link to confirm your account.
             </p>
             <p className="text-sm text-white/80">
-              You can make contributions while waiting for verification, but you'll need to verify your email to access your dashboard.
+              If you don't see the email, check your spam folder or try resending the verification email.
             </p>
             <p className="text-xs text-white/60 bg-white/5 p-2 border border-white/10">
               💡 <strong>Mobile users:</strong> If you're having trouble with the verification link, try opening it in your default browser or copy the link and paste it in a new tab.
             </p>
             <div className="flex flex-col gap-3">
-              {returnTo && (
-                // @ts-ignore
-                <Button 
-                  type="button"
-                  variant="custom" 
-                  className="bg-brand-green text-black border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]" 
-                  onClick={handleContinueContributing}
-                  disabled={isCheckingSession}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  <span>{isCheckingSession ? 'Checking session...' : 'Continue Contributing'}</span>
-                </Button>
-              )}
+              {/* @ts-ignore */}
+              <Button 
+                type="button"
+                variant="custom" 
+                className="bg-brand-green text-black border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]" 
+                onClick={handleResendVerification}
+              >
+                Resend Verification Email
+              </Button>
               {/* @ts-ignore */}
               <Button 
                 type="button"
                 variant="custom" 
                 className="bg-brand-accent-red text-white border-2 border-black shadow-[-4px_4px_0px_#161B47] hover:shadow-[-2px_2px_0px_#161B47] active:shadow-[0px_0px_0px_#161B47]" 
-                onClick={handleClose} 
-                disabled={isCheckingSession}
+                onClick={() => router.push('/auth/login')}
               >
-                <X className="mr-2 h-4 w-4" />
-                <span>{isCheckingSession ? 'Checking session...' : 'Go to Dashboard'}</span>
+                Go to Login
               </Button>
             </div>
           </>

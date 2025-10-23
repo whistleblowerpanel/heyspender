@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getUserFriendlyError } from '@/lib/utils';
+import EmailVerificationBanner from '@/components/ui/EmailVerificationBanner';
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -77,6 +78,8 @@ const Navbar = () => {
   };
   
   return <>
+      {/* Email Verification Banner - will show when we re-enable email verification */}
+      <EmailVerificationBanner />
       <header className="fixed top-4 left-4 right-4 z-[9999] w-auto">
         <nav className={`max-w-7xl mx-auto text-white border-2 border-black flex justify-between items-center h-[4.5rem] px-4 transition-all duration-300 backdrop-blur-sm ${
           isScrolled 

@@ -236,7 +236,16 @@ const GetStartedContent = () => {
   });
 
   const handleClose = () => {
-    router.push('/dashboard');
+    // Check if there's a returnTo parameter in the URL
+    const returnTo = searchParams.get('returnTo');
+    
+    if (returnTo) {
+      // If returnTo is provided, navigate there
+      router.push(returnTo);
+    } else {
+      // Otherwise, go back to the previous page
+      router.back();
+    }
   };
 
   // EXACT number formatting - NO MODIFICATIONS

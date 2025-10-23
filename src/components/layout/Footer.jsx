@@ -32,7 +32,7 @@ const Footer = () => {
             <p className="font-semibold text-white mb-3">Product</p>
             <ul className="space-y-2 text-sm text-white/80">
               <li><Link href="/explore" className="hover:text-white">Explore</Link></li>
-              <li><Link href="/dashboard" className="hover:text-white">Dashboard</Link></li>
+              <li><Link href="/dashboard/wishlist" className="hover:text-white">Dashboard</Link></li>
               <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>
               <li><Link href="/faq" className="hover:text-white">FAQ</Link></li>
             </ul>

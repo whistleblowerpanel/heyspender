@@ -16,6 +16,8 @@ export const useAuth = () => {
       signInWithEmailPassword: () => Promise.resolve({ error: null }),
       signUpWithEmailPassword: () => Promise.resolve({ error: null }),
       signOut: () => Promise.resolve({ error: null }),
+      requestPasswordReset: () => Promise.resolve({ error: null }),
+      resetPassword: () => Promise.resolve({ error: null }),
     };
   }
   return context;
@@ -117,8 +119,11 @@ export const AuthProvider = ({ children }) => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('Auth state change:', event, session?.user?.id);
-        // Handle all auth events including token refresh, session expiry, and password recovery
-        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' || event === 'PASSWORD_RECOVERY') {
+        // Handle all auth events including password recovery
+        if (event === 'SIGNED_IN' || 
+            event === 'SIGNED_OUT' || 
+            event === 'TOKEN_REFRESHED' || 
+            event === 'PASSWORD_RECOVERY') {
           updateUser(session?.user ?? null);
         }
       }
@@ -210,39 +215,23 @@ export const AuthProvider = ({ children }) => {
     return supabase.auth.updateUser({ email: newEmail });
   }, []);
 
+  /**
+   * Request password reset email
+   * @param {string} email - User's email address
+   * @param {string} redirectTo - Optional custom redirect URL (defaults to /auth/reset-password)
+   * @returns {Promise} Supabase auth response
+   */
   const requestPasswordReset = useCallback(async (email, redirectTo) => {
-    try {
-      console.log('Requesting password reset for:', email);
-      console.log('Redirect URL:', redirectTo || `${window.location.origin}/auth/reset-password`);
-      
-      // First, check if the user exists
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('email')
-        .eq('email', email)
-        .maybeSingle();
-      
-      if (userError) {
-        console.error('Error checking user:', userError);
-        return { error: { message: 'Unable to verify user account. Please try again.' } };
-      }
-      
-      if (!userData) {
-        return { error: { message: 'No account found with this email address.' } };
-      }
-      
-      const result = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectTo || `${window.location.origin}/auth/reset-password`
-      });
-      
-      console.log('Password reset result:', result);
-      return result;
-    } catch (error) {
-      console.error('Password reset request error:', error);
-      return { error };
-    }
+    return supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectTo || `${window.location.origin}/auth/reset-password`
+    });
   }, []);
 
+  /**
+   * Reset password (must be called with an active recovery session)
+   * @param {string} newPassword - New password to set
+   * @returns {Promise} Supabase auth response
+   */
   const resetPassword = useCallback(async (newPassword) => {
     return supabase.auth.updateUser({ 
       password: newPassword 
