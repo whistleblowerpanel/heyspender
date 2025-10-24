@@ -15,9 +15,9 @@ const supabase = createClient(
 
 const STORAGE_BUCKET = 'HeySpender Media';
 
-// AVIF Quality Settings
-const AVIF_QUALITY = 80; // 60-90 recommended (80 is a good balance)
-const AVIF_EFFORT = 4;    // 0-9, higher = smaller file but slower (4 is balanced)
+// AVIF Quality Settings - Optimized for better compression
+const AVIF_QUALITY = 65; // Lower quality for better compression (60-90 range)
+const AVIF_EFFORT = 6;    // Higher effort for smaller files (0-9 range)
 
 /**
  * POST /api/upload-image
@@ -79,19 +79,37 @@ export async function POST(request) {
       })
       .toBuffer();
 
+    // Calculate compression ratio
+    const originalSize = buffer.length;
+    const compressedSize = avifBuffer.length;
+    const savings = Math.round((1 - compressedSize / originalSize) * 100);
+
+    // If AVIF is larger or savings < 10%, use original format
+    let finalBuffer = avifBuffer;
+    let finalFormat = 'avif';
+    let finalFileName;
+    let finalContentType = 'image/avif';
+
+    if (savings < 10) {
+      console.log(`⚠️ AVIF compression not effective (${savings}% savings), using original format`);
+      finalBuffer = buffer;
+      finalFormat = file.name.split('.').pop().toLowerCase();
+      finalContentType = file.type;
+    }
+
     // Generate unique filename
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 8);
-    const fileName = `${userId}-${timestamp}-${randomStr}.avif`;
-    const filePath = `${folder}/${fileName}`;
+    finalFileName = `${userId}-${timestamp}-${randomStr}.${finalFormat}`;
+    const filePath = `${folder}/${finalFileName}`;
 
     console.log(`📤 Uploading to Supabase Storage: ${filePath}`);
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(STORAGE_BUCKET)
-      .upload(filePath, avifBuffer, {
-        contentType: 'image/avif',
+      .upload(filePath, finalBuffer, {
+        contentType: finalContentType,
         cacheControl: '31536000', // Cache for 1 year
         upsert: false,
       });
@@ -108,23 +126,21 @@ export async function POST(request) {
 
     const publicUrl = urlData.publicUrl;
 
-    // Calculate savings
-    const originalSize = buffer.length;
-    const compressedSize = avifBuffer.length;
-    const savings = Math.round((1 - compressedSize / originalSize) * 100);
+    // Calculate final savings
+    const finalSavings = Math.round((1 - finalBuffer.length / originalSize) * 100);
 
     console.log(`✅ Upload successful!`);
     console.log(`   Original: ${(originalSize / 1024).toFixed(2)} KB`);
-    console.log(`   AVIF: ${(compressedSize / 1024).toFixed(2)} KB`);
-    console.log(`   Savings: ${savings}%`);
+    console.log(`   ${finalFormat.toUpperCase()}: ${(finalBuffer.length / 1024).toFixed(2)} KB`);
+    console.log(`   Savings: ${finalSavings}%`);
 
     return Response.json({
       success: true,
       url: publicUrl,
       originalSize,
-      compressedSize,
-      savings,
-      format: 'avif',
+      compressedSize: finalBuffer.length,
+      savings: finalSavings,
+      format: finalFormat,
       folder,
     });
 
