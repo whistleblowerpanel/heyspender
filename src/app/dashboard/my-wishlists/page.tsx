@@ -26,6 +26,7 @@ import EditCashGoalModal from '@/components/dashboard/EditCashGoalModal';
 import EditWishlistItemModal from '@/components/dashboard/EditWishlistItemModal';
 import AddWishlistItemModal from '@/components/dashboard/AddWishlistItemModal';
 import AddOccasionModal from '@/components/dashboard/AddOccasionModal';
+import GetStartedWizard from '@/components/wizard/GetStartedWizard';
 import WishlistStats from '@/components/dashboard/WishlistStats';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -65,6 +66,7 @@ const MyWishlistV2Page = () => {
   const [selectedWishlistItem, setSelectedWishlistItem] = useState(null);
   const [addWishlistItemModalOpen, setAddWishlistItemModalOpen] = useState(false);
   const [addOccasionModalOpen, setAddOccasionModalOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [deleteItemModalOpen, setDeleteItemModalOpen] = useState(false);
   const [moveItemModalOpen, setMoveItemModalOpen] = useState(false);
   
@@ -252,9 +254,9 @@ const MyWishlistV2Page = () => {
 
   // Event handlers
   const handleGetStarted = () => {
-    // For logged-in users, open the wizard directly without registration flow
+    // For logged-in users, open the full wizard
     if (user) {
-      setAddOccasionModalOpen(true);
+      setWizardOpen(true);
     } else {
       // For unauthenticated users, go to get-started page
       router.push('/get-started');
@@ -262,9 +264,9 @@ const MyWishlistV2Page = () => {
   };
 
   const handleCreateWishlist = () => {
-    // For logged-in users, open the wizard directly without registration flow
+    // For logged-in users, open the full wizard
     if (user) {
-      setAddOccasionModalOpen(true);
+      setWizardOpen(true);
     } else {
       // For unauthenticated users, go to get-started page
       router.push('/get-started');
@@ -575,6 +577,50 @@ const MyWishlistV2Page = () => {
     } catch (error) {
       console.error('Error moving wishlist item:', error);
       toast({ variant: 'destructive', title: 'Unable to move item', description: JSON.stringify(error) });
+    }
+  };
+
+  const handleWizardComplete = async (wizardData) => {
+    try {
+      // Create the wishlist
+      const wishlist = await wishlistService.createWishlist(user.id, {
+        title: wizardData.title,
+        occasion: wizardData.occasion,
+        story: wizardData.story,
+        visibility: wizardData.visibility,
+        event_date: wizardData.event_date,
+        cover_image_url: wizardData.cover_image_url
+      });
+      
+      // Add items if any
+      if (wizardData.items && wizardData.items.length > 0) {
+        await wishlistService.addItemsToWishlist(wishlist.id, wizardData.items);
+      }
+      
+      // Add cash goals if any
+      if (wizardData.cashGoals && wizardData.cashGoals.length > 0) {
+        for (const goal of wizardData.cashGoals) {
+          await goalsService.createGoal({
+            ...goal,
+            wishlist_id: wishlist.id
+          });
+        }
+      }
+      
+      toast({
+        title: 'Wishlist created successfully!',
+        description: 'Your wishlist has been created and is ready to share.'
+      });
+      
+      // Refresh dashboard data
+      await fetchDashboardData();
+    } catch (error) {
+      console.error('Error creating wishlist from wizard:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Unable to create wishlist',
+        description: error.message || 'An error occurred while creating your wishlist.'
+      });
     }
   };
 
@@ -1387,6 +1433,13 @@ const MyWishlistV2Page = () => {
           isOpen={addOccasionModalOpen}
           onClose={() => setAddOccasionModalOpen(false)}
           onSave={handleSaveOccasion}
+        />
+
+        <GetStartedWizard
+          isOpen={wizardOpen}
+          onClose={() => setWizardOpen(false)}
+          onComplete={handleWizardComplete}
+          userId={user?.id}
         />
 
         {/* Wishlist Item Modals */}
