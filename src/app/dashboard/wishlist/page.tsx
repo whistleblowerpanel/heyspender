@@ -25,7 +25,6 @@ import AddCashGoalModal from '@/components/dashboard/AddCashGoalModal';
 import EditCashGoalModal from '@/components/dashboard/EditCashGoalModal';
 import EditWishlistItemModal from '@/components/dashboard/EditWishlistItemModal';
 import AddWishlistItemModal from '@/components/dashboard/AddWishlistItemModal';
-import AddOccasionModal from '@/components/dashboard/AddOccasionModal';
 import GetStartedWizard from '@/components/wizard/GetStartedWizard';
 import WishlistStats from '@/components/dashboard/WishlistStats';
 import { Input } from '@/components/ui/input';
@@ -65,7 +64,6 @@ const MyWishlistV2Page = () => {
   const [editWishlistItemModalOpen, setEditWishlistItemModalOpen] = useState(false);
   const [selectedWishlistItem, setSelectedWishlistItem] = useState(null);
   const [addWishlistItemModalOpen, setAddWishlistItemModalOpen] = useState(false);
-  const [addOccasionModalOpen, setAddOccasionModalOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [deleteItemModalOpen, setDeleteItemModalOpen] = useState(false);
   const [moveItemModalOpen, setMoveItemModalOpen] = useState(false);
@@ -277,26 +275,7 @@ const MyWishlistV2Page = () => {
   };
 
   const handleOccasionCreate = () => {
-    setAddOccasionModalOpen(true);
-  };
-
-  const handleSaveOccasion = async (formData) => {
-    try {
-      // Create a new wishlist with the occasion title
-      await wishlistService.createWishlist(user.id, {
-        title: formData.title,
-        occasion: formData.category || 'other',
-        story: formData.description,
-        visibility: formData.visibility || 'unlisted',
-        cover_image_url: formData.coverImage || null
-      });
-      
-      await fetchDashboardData(); // Refresh data
-      setAddOccasionModalOpen(false);
-    } catch (error) {
-      console.error('Error creating occasion:', error);
-      toast({ variant: 'destructive', title: 'Unable to create occasion', description: JSON.stringify(error) });
-    }
+    setWizardOpen(true);
   };
 
   const handleOccasionRename = async (prev, newVal) => {
@@ -375,7 +354,7 @@ const MyWishlistV2Page = () => {
   };
 
   const handleAddWishlist = () => {
-    setAddOccasionModalOpen(true);
+    setWizardOpen(true);
   };
 
   const handleShareWishlist = (wishlist) => {
@@ -1145,12 +1124,6 @@ const MyWishlistV2Page = () => {
           wishlists={wishlists}
           defaultWishlistId={selectedWishlist?.id}
           onSave={handleSaveWishlistItem}
-        />
-
-        <AddOccasionModal
-          isOpen={addOccasionModalOpen}
-          onClose={() => setAddOccasionModalOpen(false)}
-          onSave={handleSaveOccasion}
         />
 
         <GetStartedWizard
