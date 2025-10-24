@@ -213,16 +213,55 @@ const GetStartedContent = () => {
         cashGoals
       };
       
-      // Store wizard data in localStorage for after registration
-      localStorage.setItem('wizardData', JSON.stringify(wizardData));
-      
-      toast({
-        title: 'Wizard completed!',
-        description: 'Now let\'s create your account to save your wishlist.'
-      });
+      if (user) {
+        // User is already logged in, create the wishlist directly
+        const { wishlistService } = await import('@/lib/wishlistService');
+        
+        // Create the wishlist
+        const wishlist = await wishlistService.createWishlist(user.id, {
+          title: data.title,
+          occasion: data.occasion,
+          story: data.story,
+          visibility: data.visibility,
+          event_date: data.event_date,
+          cover_image_url: data.cover_image_url
+        });
+        
+        // Add items if any
+        if (items.length > 0) {
+          await wishlistService.addItemsToWishlist(wishlist.id, items);
+        }
+        
+        // Add cash goals if any
+        if (cashGoals.length > 0) {
+          const { goalsService } = await import('@/lib/wishlistService');
+          for (const goal of cashGoals) {
+            await goalsService.createGoal({
+              ...goal,
+              wishlist_id: wishlist.id
+            });
+          }
+        }
+        
+        toast({
+          title: 'Wishlist created successfully!',
+          description: 'Your wishlist has been created and is ready to share.'
+        });
+        
+        // Navigate to dashboard
+        router.push('/dashboard/wishlist');
+      } else {
+        // User is not logged in, store data for after registration
+        localStorage.setItem('wizardData', JSON.stringify(wizardData));
+        
+        toast({
+          title: 'Wizard completed!',
+          description: 'Now let\'s create your account to save your wishlist.'
+        });
 
-      // Navigate to registration page
-      router.push('/auth/register');
+        // Navigate to registration page
+        router.push('/auth/register');
+      }
     } catch (error) {
       console.error('Error processing wizard data:', error);
       toast({

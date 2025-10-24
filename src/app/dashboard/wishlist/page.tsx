@@ -251,11 +251,23 @@ const MyWishlistV2Page = () => {
 
   // Event handlers
   const handleGetStarted = () => {
-    router.push('/get-started');
+    // For logged-in users, open the wizard directly without registration flow
+    if (user) {
+      setAddOccasionModalOpen(true);
+    } else {
+      // For unauthenticated users, go to get-started page
+      router.push('/get-started');
+    }
   };
 
   const handleCreateWishlist = () => {
-    router.push('/get-started');
+    // For logged-in users, open the wizard directly without registration flow
+    if (user) {
+      setAddOccasionModalOpen(true);
+    } else {
+      // For unauthenticated users, go to get-started page
+      router.push('/get-started');
+    }
   };
 
   const handleOccasionSelect = (occasion) => {
