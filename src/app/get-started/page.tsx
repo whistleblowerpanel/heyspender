@@ -75,19 +75,19 @@ const steps = [
 const sampleWishlists = [
   { title: "My Birthday Wishlist", occasion: "Birthday" },
   { title: "Wedding Registry", occasion: "Wedding" },
-  { title: "Baby Shower Dreams", occasion: "Baby" },
+  { title: "Baby Shower Dreams", occasion: "Baby Shower" },
   { title: "Graduation Goals", occasion: "Graduation" },
-  { title: "Holiday Wishes", occasion: "Just Because" }
+  { title: "Holiday Wishes", occasion: "Holiday" }
 ];
 
 const occasions = [
   { name: 'Birthday', icon: Cake, value: 'birthday' },
   { name: 'Wedding', icon: Heart, value: 'wedding' },
-  { name: 'Baby', icon: Baby, value: 'other' },
+  { name: 'Baby Shower', icon: Baby, value: 'baby_shower' },
   { name: 'Graduation', icon: GraduationCap, value: 'graduation' },
-  { name: 'Housewarming', icon: Home, value: 'other' },
-  { name: 'Charity', icon: HeartHandshake, value: 'other' },
-  { name: 'Just Because', icon: Sparkles, value: 'other' },
+  { name: 'Housewarming', icon: Home, value: 'housewarming' },
+  { name: 'Anniversary', icon: HeartHandshake, value: 'anniversary' },
+  { name: 'Holiday', icon: Sparkles, value: 'holiday' },
   { name: 'Other', icon: Gift, value: 'other' },
   { name: 'No occasion', icon: PartyPopper, value: null }
 ];
@@ -196,12 +196,12 @@ const GetStartedContent = () => {
   };
 
   // EXACT occasion mapping - NO MODIFICATIONS
-  const getOccasionValue = (displayName) => {
+  const getOccasionValue = (displayName: string) => {
     const occasion = occasions.find(occ => occ.name === displayName);
     return occasion ? occasion.value : null;
   };
 
-  // EXACT submission handler - Modified for new user flow
+  // EXACT submission handler - Modified to handle both logged-in and non-logged-in users
   const handleComplete = handleSubmit(async (data) => {
     if (isSubmitting) return;
     
@@ -214,45 +214,50 @@ const GetStartedContent = () => {
       };
       
       if (user) {
-        // User is already logged in, create the wishlist directly
-        const { wishlistService } = await import('@/lib/wishlistService');
-        
-        // Create the wishlist
-        const wishlist = await wishlistService.createWishlist(user.id, {
+        // User is logged in - create wishlist directly
+        const wishlistData = {
           title: data.title,
-          occasion: data.occasion,
+          occasion: getOccasionValue(data.occasion || ''), // Map display name to database value
           story: data.story,
           visibility: data.visibility,
           event_date: data.event_date,
           cover_image_url: data.cover_image_url
-        });
-        
-        // Add items if any
+        };
+
+        const createdWishlist = await wishlistService.createWishlist(user.id, wishlistData);
+
+        // Add items if any were created
         if (items.length > 0) {
-          await wishlistService.addItemsToWishlist(wishlist.id, items);
+          await wishlistService.addItemsToWishlist(createdWishlist.id, items);
         }
-        
-        // Add cash goals if any
+
+        // Add cash goals if any were created
         if (cashGoals.length > 0) {
           const { goalsService } = await import('@/lib/wishlistService');
           for (const goal of cashGoals) {
             await goalsService.createGoal({
               ...goal,
-              wishlist_id: wishlist.id
+              wishlist_id: createdWishlist.id
             });
           }
         }
-        
+
         toast({
           title: 'Wishlist created successfully!',
-          description: 'Your wishlist has been created and is ready to share.'
+          description: `"${createdWishlist.title}" has been created and is ready to share.`
         });
-        
+
         // Navigate to dashboard
         router.push('/dashboard/wishlist');
       } else {
-        // User is not logged in, store data for after registration
-        localStorage.setItem('wizardData', JSON.stringify(wizardData));
+        // User is not logged in - store data and redirect to registration
+        const wizardDataForStorage = {
+          ...data,
+          occasion: getOccasionValue(data.occasion || ''), // Map display name to database value
+          items,
+          cashGoals
+        };
+        localStorage.setItem('wizardData', JSON.stringify(wizardDataForStorage));
         
         toast({
           title: 'Wizard completed!',
@@ -262,7 +267,7 @@ const GetStartedContent = () => {
         // Navigate to registration page
         router.push('/auth/register');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing wizard data:', error);
       toast({
         variant: 'destructive',
@@ -288,12 +293,12 @@ const GetStartedContent = () => {
   };
 
   // EXACT number formatting - NO MODIFICATIONS
-  const formatNumberWithCommas = (value) => {
+  const formatNumberWithCommas = (value: any) => {
     if (!value) return '';
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
-  const parseNumberFromFormatted = (formattedValue) => {
+  const parseNumberFromFormatted = (formattedValue: any) => {
     if (!formattedValue) return 0;
     return Number(formattedValue.replace(/,/g, ''));
   };
@@ -517,7 +522,7 @@ const GetStartedContent = () => {
                 >
                   <ModernDateInput
                     value={watch('event_date')}
-                    onChange={(date) => setValue('event_date', date)}
+                    onChange={(date: any) => setValue('event_date', date)}
                     minDate={new Date()}
                     placeholder="Pick a date"
                     className="bg-white border border-gray-300 text-gray-900 p-4 focus:outline-none focus:border-brand-purple-dark"
@@ -580,7 +585,8 @@ const GetStartedContent = () => {
                 <FileUpload
                   variant="purple"
                   value={watch('cover_image_url')}
-                  onFileSelect={async (file) => {
+                  className=""
+                  onFileSelect={async (file: any) => {
                     setUploading(true);
                     try {
                       // If user is authenticated, upload to server
@@ -891,7 +897,7 @@ const GetStartedContent = () => {
       <AddItemFormModal
         isOpen={addItemModalOpen}
         onClose={() => setAddItemModalOpen(false)}
-        onSave={(itemData) => {
+        onSave={(itemData: any) => {
           setItems(prev => [...prev, itemData]);
         }}
         type="item"
@@ -901,7 +907,7 @@ const GetStartedContent = () => {
       <AddItemFormModal
         isOpen={addGoalModalOpen}
         onClose={() => setAddGoalModalOpen(false)}
-        onSave={(goalData) => {
+        onSave={(goalData: any) => {
           setCashGoals(prev => [...prev, goalData]);
         }}
         type="goal"

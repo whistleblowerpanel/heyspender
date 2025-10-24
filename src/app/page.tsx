@@ -299,13 +299,8 @@ const HomePage = () => {
   
   
   const handleGetStarted = () => {
-    if (user) {
-      // If user is already logged in, go to dashboard
-      router.push('/dashboard/wishlist');
-    } else {
-      // If user is not logged in, go to Get Started wizard
-      router.push('/get-started');
-    }
+    // Always go to the same wizard - it will handle logged-in vs non-logged-in users
+    router.push('/get-started');
   };
 
   const handleCardClick = (index) => {
