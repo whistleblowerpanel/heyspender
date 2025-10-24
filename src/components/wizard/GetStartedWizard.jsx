@@ -103,7 +103,7 @@ const GetStartedWizard = ({ isOpen, onClose, onComplete, userId }) => {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white mb-2">
-                Welcome to HeySpender!
+                Welcome to HeySpender, HeyWisher!
               </h2>
               <p className="text-white/80">
                 We'll ask a few quick questions. You can edit anything later.

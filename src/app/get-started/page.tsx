@@ -56,7 +56,7 @@ const steps = [
   },
   { 
     title: 'Story', 
-    description: 'Tell your Spenders why this wishlist matters. Tell your supporters why this wishlist is special to you.' 
+    description: 'Tell your Spenders why this wishlist matters. Tell your Spenders why this wishlist is special to you.' 
   },
   { 
     title: 'Cover', 
@@ -529,7 +529,7 @@ const GetStartedContent = () => {
           >
             {/* Instructional text */}
             <p className="text-gray-600 text-sm">
-              Choose a beautiful cover photo that represents your wishlist and makes it stand out to your supporters.
+              Choose a beautiful cover photo that represents your wishlist and makes it stand out to your Spenders.
             </p>
             
             {/* Upload field */}

@@ -250,3 +250,5 @@ The issue was caused by **incorrect PKCE code handling** in your Next.js project
 ---
 
 **🚀 Your email verification and password reset should now work perfectly!**
+
+

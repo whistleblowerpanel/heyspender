@@ -91,7 +91,7 @@ const PricingPage = () => {
     {
       icon: Users,
       title: "Spender Contributions\nAre Optional",
-      description: "Supporters can choose to tip HeySpender, but it's never required",
+      description: "Spenders can choose to tip HeySpender, but it's never required",
       price: "₦0.00",
       color: "bg-brand-orange"
     },
@@ -110,12 +110,12 @@ const PricingPage = () => {
       answer: "Safe and secure wishlist funding is our top priority. That's why we partner with industry-leading payment processors like Paystack to accept and deliver contributions. The transaction fee is automatically deducted from each contribution. It covers the costs of credit, debit, and bank transfer charges, safely delivering contributions, and helps us offer more ways to contribute—through credit, bank transfer, debit, mobile money, or digital wallets. This is the only fee deducted for someone creating a wishlist on HeySpender and helps power all your wishlist needs."
     },
     {
-      question: "Are supporter contributions to HeySpender required?",
-      answer: "It's important to us that everyone is able to get the help they need—which is why we don't charge a fee to create a wishlist. Instead, we accept optional contributions from supporters that are always appreciated, but never required. Supporter contributions help make it possible for us to offer powerful and trusted wishlist tools, customer support, and a global team of Trust & Safety experts."
+      question: "Are Spender contributions to HeySpender required?",
+      answer: "It's important to us that everyone is able to get the help they need—which is why we don't charge a fee to create a wishlist. Instead, we accept optional contributions from Spenders that are always appreciated, but never required. Spender contributions help make it possible for us to offer powerful and trusted wishlist tools, customer support, and a global team of Trust & Safety experts."
     },
     {
-      question: "Is there a fee for supporters who make recurring contributions?",
-      answer: "Supporters who choose to make a recurring contribution to a wishlist on HeySpender pay a 5% fee per contribution to help support this feature. This fee helps us maintain the infrastructure needed for recurring contributions."
+      question: "Is there a fee for Spenders who make recurring contributions?",
+      answer: "Spenders who choose to make a recurring contribution to a wishlist on HeySpender pay a 5% fee per contribution to help support this feature. This fee helps us maintain the infrastructure needed for recurring contributions."
     },
     {
       question: "What are HeySpender Pro's costs and fees?",

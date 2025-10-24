@@ -238,6 +238,7 @@ export const AuthProvider = ({ children }) => {
     });
   }, []);
 
+
   const value = {
     user,
     loading,

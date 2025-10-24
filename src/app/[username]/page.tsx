@@ -13,6 +13,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useToast } from '@/components/ui/use-toast';
 import { updatePageSocialMedia } from '@/lib/pageSEOConfig';
+import { updateAllSEOTags, generateProfileSEOData } from '@/lib/seoUtils';
 import { getUserFriendlyError } from '@/lib/utils';
 
 const ProfilePage = () => {
@@ -83,18 +84,26 @@ const ProfilePage = () => {
     }
   }, [username, fetchProfileData]);
 
-  // SEO meta tags
+  // Comprehensive SEO meta tags
   useEffect(() => {
-    if (profile) {
+    if (profile && wishlists) {
+      const baseUrl = 'https://heyspender.com';
+      const seoData = generateProfileSEOData(profile, wishlists, baseUrl);
+      
+      // Update all SEO tags including structured data
+      updateAllSEOTags(seoData);
+      
+      // Also update legacy social media tags for compatibility
       const profileUrl = `/${username}`;
       const customSEO = {
-        title: `${profile.full_name || profile.username} — HeySpender`,
-        description: `View ${profile.full_name || profile.username}'s wishlists and support their dreams on HeySpender.`,
-        image: profile.avatar_url || 'https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp'
+        title: seoData.title,
+        description: seoData.description,
+        image: seoData.image,
+        keywords: seoData.keywords
       };
       updatePageSocialMedia(profileUrl, customSEO);
     }
-  }, [profile, username]);
+  }, [profile, wishlists, username]);
 
   if (loading || authLoading) {
     return (

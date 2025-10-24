@@ -18,6 +18,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { getUserFriendlyError } from '@/lib/utils';
 import { ReminderService } from '@/lib/reminderService';
 import { initializePaystackPayment } from '@/lib/paystackService';
+import { updatePageSocialMedia } from '@/lib/pageSEOConfig';
+import { updateAllSEOTags, generateItemSEOData } from '@/lib/seoUtils';
 import { z } from 'zod';
 
 // Form validation schemas
@@ -148,6 +150,25 @@ const WishlistItemForm = () => {
       }
 
       setItem(itemData);
+      
+      // Update comprehensive SEO meta tags for this item
+      if (itemData && wishlistData) {
+        const baseUrl = 'https://heyspender.com';
+        const seoData = generateItemSEOData(itemData, wishlistData, baseUrl);
+        
+        // Update all SEO tags including structured data
+        updateAllSEOTags(seoData);
+        
+        // Also update legacy social media tags for compatibility
+        const itemUrl = `/${username}/${slug}/${itemId}`;
+        const customSEO = {
+          title: seoData.title,
+          description: seoData.description,
+          image: seoData.image,
+          keywords: seoData.keywords
+        };
+        updatePageSocialMedia(itemUrl, customSEO);
+      }
     } catch (error) {
       console.error('Error fetching item data:', error);
     } finally {

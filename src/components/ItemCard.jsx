@@ -4,10 +4,20 @@ import { CheckCircle, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import ImagePreviewModal from './ImagePreviewModal';
+import { useTypingAnimation } from '@/hooks/useTypingAnimation';
 
 const ItemCard = ({ item, onClaimed, username, slug, viewMode }) => {
   const isFullyClaimed = (item.qty_claimed || 0) >= item.qty_total;
   const router = useRouter();
+
+  // Typing animation for claim button
+  const claimButtonText = useTypingAnimation(
+    ['Hey Spender', 'Claim This Item'], 
+    80, // typing speed
+    1500, // pause duration
+    60, // delete speed
+    !isFullyClaimed // only animate when not fully claimed
+  );
 
   const getPaidStatus = () => {
     if (!item.claims || item.claims.length === 0) {
@@ -97,7 +107,7 @@ const ItemCard = ({ item, onClaimed, username, slug, viewMode }) => {
                   ) : 
                   'Claimed This!'
                 ) : 
-                'Odogwu, Pay for This.'
+                claimButtonText
               }
             </Button>
           </div>
@@ -138,7 +148,7 @@ const ItemCard = ({ item, onClaimed, username, slug, viewMode }) => {
                   ) : 
                   'Claimed This!'
                 ) : 
-                'Odogwu, Pay for This.'
+                claimButtonText
               }
             </Button>
           </div>

@@ -293,7 +293,7 @@ export const WalletProvider = ({ children }) => {
             depositor = depositor.split('(')[0].split(' - ')[0].trim();
           }
           if (depositor) {
-            tx.contributor_name = tx.contributor_name || depositor;
+            tx.spender_name = tx.spender_name || depositor;
           }
 
           // Normalize source label if missing
@@ -407,7 +407,7 @@ export const WalletProvider = ({ children }) => {
           source: 'contributions',
           amount: c.amount,
           title: c.goal?.title || null,
-          contributor_name: nameOut,
+          spender_name: nameOut,
           description: c.goal?.title ? `Contributions for "${c.goal.title}"` : 'Contributions received',
           created_at: c.created_at,
         });
@@ -426,7 +426,7 @@ export const WalletProvider = ({ children }) => {
         amount: c.amount,
         title: c.goal?.title || null,
         // depositor shows sender (current user)
-        contributor_name: myUsername || 'me',
+        spender_name: myUsername || 'me',
         // explicit receiver username for UI
         recipient_username: c.goal?.wishlist?.user?.username || null,
         description: c.goal?.title ? `Contribution sent to @${c.goal?.wishlist?.user?.username || 'user'}` : 'Contribution sent',
@@ -444,19 +444,19 @@ export const WalletProvider = ({ children }) => {
           source: 'cash_sent',
           amount: Number(row?.wishlist_item?.unit_price_estimate || 0) || 0,
           title: row?.wishlist_item?.name || null,
-          contributor_name: myUsername || 'me',
+          spender_name: myUsername || 'me',
           recipient_username: row?.wishlist_item?.wishlist?.user?.username || null,
           description: row?.wishlist_item?.name ? `Paid for "${row.wishlist_item.name}" to @${row?.wishlist_item?.wishlist?.user?.username || 'user'}` : 'Wishlist item payment',
           created_at: row.created_at,
         }));
 
-      // Merge and enrich wallet txs missing contributor_name for cash payments using item title -> username map
+      // Merge and enrich wallet txs missing spender_name for cash payments using item title -> username map
       const enrichedWalletTxs = walletTransactions.map((tx) => {
         const lowerSrc = (tx.source || '').toLowerCase();
         const isCashPayment = tx.type === 'credit' && (lowerSrc.includes('wishlist') || lowerSrc.includes('cash') || !lowerSrc);
         
         
-        if (isCashPayment && !tx.contributor_name && itemNameToSenders.size > 0) {
+        if (isCashPayment && !tx.spender_name && itemNameToSenders.size > 0) {
           const primaryKey = tx.title ? normalizeTitle(tx.title) : '';
           const secondaryKey = tx.description ? normalizeTitle(tx.description) : '';
           let candidates = [];
@@ -481,7 +481,7 @@ export const WalletProvider = ({ children }) => {
               const diff = Math.abs(new Date(c.created_at).getTime() - txTime);
               if (diff < bestDiff) { best = c; bestDiff = diff; }
             }
-            return { ...tx, contributor_name: best.username };
+            return { ...tx, spender_name: best.username };
           }
         }
         return tx;

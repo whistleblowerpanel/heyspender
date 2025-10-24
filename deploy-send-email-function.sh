@@ -43,3 +43,5 @@ else
     echo "Please check your Supabase CLI configuration and try again"
     exit 1
 fi
+
+

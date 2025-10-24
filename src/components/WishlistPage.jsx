@@ -23,6 +23,8 @@ import Confetti from '@/components/Confetti';
 import { useConfetti } from '@/contexts/ConfettiContext';
 import { getUserFriendlyError } from '@/lib/utils';
 import { updatePageSocialMedia } from '@/lib/pageSEOConfig';
+import { updateAllSEOTags, generateWishlistSEOData } from '@/lib/seoUtils';
+import { useTypingAnimation } from '@/hooks/useTypingAnimation';
 
 // Helper function to get progress bar color based on percentage
 const getProgressColor = (percentage) => {
@@ -126,12 +128,20 @@ const WishlistPage = ({ wishlist: initialWishlist }) => {
       setWishlist(data);
       setGoals(data.goals || []);
       
-      // Update SEO for this wishlist
+      // Update comprehensive SEO meta tags for this wishlist
+      const baseUrl = 'https://heyspender.com';
+      const seoData = generateWishlistSEOData(data, baseUrl);
+      
+      // Update all SEO tags including structured data
+      updateAllSEOTags(seoData);
+      
+      // Also update legacy social media tags for compatibility
       const wishlistUrl = `/${username}/${slug}`;
       const customSEO = {
-        title: `${data.title} — HeySpender`,
-        description: data.story || `Check out ${data.user?.full_name || 'this user'}'s wishlist for their ${data.occasion || 'special occasion'}!`,
-        image: data.cover_image_url || 'https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp'
+        title: seoData.title,
+        description: seoData.description,
+        image: seoData.image,
+        keywords: seoData.keywords
       };
       updatePageSocialMedia(wishlistUrl, customSEO);
 
@@ -626,7 +636,7 @@ const WishlistPage = ({ wishlist: initialWishlist }) => {
                     <div className="text-center py-16 px-8 border-2 border-dashed border-gray-300">
                         <Info className="mx-auto h-12 w-12 text-gray-400" />
                         <h3 className="mt-4 text-xl font-semibold">No items yet</h3>
-                        <p className="mt-2 text-sm text-gray-500">The creator hasn't added any items to this wishlist.</p>
+                        <p className="mt-2 text-sm text-gray-500">The Wisher hasn't added any items to this wishlist.</p>
                     </div>
                 )}
             </section>
@@ -656,6 +666,15 @@ const ImagePreviewModal = ({ item, trigger }) => {
 const ItemCard = ({ item, onClaimed, username, slug, viewMode }) => {
     const isFullyClaimed = (item.qty_claimed || 0) >= item.qty_total;
     const router = useRouter();
+
+    // Typing animation for claim button
+    const claimButtonText = useTypingAnimation(
+        ['Hey Spender', 'Claim This Item'], 
+        80, // typing speed
+        1500, // pause duration
+        60, // delete speed
+        !isFullyClaimed // only animate when not fully claimed
+    );
 
     // Check if item is actually paid for (not just claimed/reserved)
     const getPaidStatus = () => {
@@ -757,7 +776,7 @@ const ItemCard = ({ item, onClaimed, username, slug, viewMode }) => {
                                 ) : 
                                 'Claimed This!'
                             ) : 
-                            'Odogwu, Pay for This.'
+                            claimButtonText
                         }
                     </Button>
                 </div>
@@ -802,7 +821,7 @@ const ItemCard = ({ item, onClaimed, username, slug, viewMode }) => {
                                 ) : 
                                 'Claimed This!'
                             ) : 
-                            'Odogwu, Pay for This.'
+                            claimButtonText
                         }
                     </Button>
                 </div>
@@ -996,7 +1015,7 @@ const ContributeModal = ({ goal, recipientEmail, onContributed, trigger }) => {
 
         // Get user info from context or session
         const currentUser = user || (hasValidSession ? await getCurrentSessionUser() : null);
-        const contributorEmail = currentUser?.email || 'anonymous@heyspender.com';
+        const spenderEmail = currentUser?.email || 'anonymous@heyspender.com';
 
         setIsProcessingPayment(true);
 
@@ -1008,7 +1027,7 @@ const ContributeModal = ({ goal, recipientEmail, onContributed, trigger }) => {
 
             // Initialize Paystack payment
             const paystackResponse = await initializePaystackPayment({
-                email: contributorEmail,
+                email: spenderEmail,
                 amount: parsedAmount * 100, // Paystack expects amount in kobo
                 currency: 'NGN',
                 reference: paymentRef,
@@ -1331,7 +1350,7 @@ const ContributeModal = ({ goal, recipientEmail, onContributed, trigger }) => {
                                 'Your contribution will help reach the goal. Secure payment powered by Paystack.' :
                                 'Your contribution will help reach the goal. Secure payment powered by Paystack.'
                             ) :
-                            'Anyone can contribute to help reach this goal! No account required. Secure payment powered by Paystack.'
+                            'Anyone can spend to help reach this goal! No account required. Secure payment powered by Paystack.'
                         }
                     </DialogDescription>
                 </DialogHeader>
@@ -1358,7 +1377,7 @@ const ContributeModal = ({ goal, recipientEmail, onContributed, trigger }) => {
                                         displayName: newDisplayName
                                     }));
                                 }}/>
-                                <Label htmlFor="is_anonymous">Contribute Anonymously</Label>
+                                <Label htmlFor="is_anonymous">Spend Anonymously</Label>
                             </div>
                         </>
                     ) : (
@@ -1379,7 +1398,7 @@ const ContributeModal = ({ goal, recipientEmail, onContributed, trigger }) => {
                                         displayName: newDisplayName
                                     }));
                                 }}/>
-                                <Label htmlFor="is_anonymous">Contribute Anonymously</Label>
+                                <Label htmlFor="is_anonymous">Spend Anonymously</Label>
                             </div>
                         </>
                     )}

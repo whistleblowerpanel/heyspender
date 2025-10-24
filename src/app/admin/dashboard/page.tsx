@@ -993,7 +993,7 @@ const AdminDashboardPage = () => {
     }
     
     
-    if (transaction.contributor_name) return transaction.contributor_name;
+    if (transaction.spender_name) return transaction.spender_name;
     const desc = typeof transaction.description === 'string' ? transaction.description : '';
     const src = typeof transaction.source === 'string' ? transaction.source : '';
     let m = desc.match(/from\s+@([A-Za-z0-9_.-]+)/i);
@@ -1026,14 +1026,14 @@ const AdminDashboardPage = () => {
       return transaction.wishlist_owner_username;
     }
     
-    // For contributions (from merged transactions) - fallback to contributor name if no wishlist owner username
-    if (transaction.contributor_name && transaction.contributor_name !== 'Anonymous') {
-      return transaction.contributor_name;
+    // For contributions (from merged transactions) - fallback to spender name if no wishlist owner username
+    if (transaction.spender_name && transaction.spender_name !== 'Anonymous') {
+      return transaction.spender_name;
     }
     
     // For payouts (from merged transactions)
-    if (transaction.contributor_name) {
-      return transaction.contributor_name;
+    if (transaction.spender_name) {
+      return transaction.spender_name;
     }
     
     // Fallback to getDepositor for other cases
@@ -1073,7 +1073,7 @@ const AdminDashboardPage = () => {
       source: 'contributions',
       amount: c.amount,
       title: c.goal?.wishlist?.title || c.goal?.title || null,
-      contributor_name: c.is_anonymous ? 'Anonymous' : (c.display_name || 'Unknown'),
+      spender_name: c.is_anonymous ? 'Anonymous' : (c.display_name || 'Unknown'),
       // Store the wishlist owner's username for display
       wishlist_owner_username: c.goal?.wishlist?.user?.username || null,
       description: c.goal?.title ? `Contributions for "${c.goal.title}"` : 'Contributions received',
@@ -1087,7 +1087,7 @@ const AdminDashboardPage = () => {
       source: 'payout',
       amount: p.amount,
       title: 'Withdrawal',
-      contributor_name: p.wallet?.user?.username || p.wallet?.user?.full_name || null,
+      spender_name: p.wallet?.user?.username || p.wallet?.user?.full_name || null,
       description: `Withdrawal to ${p.destination_bank_code || 'bank'} ${p.destination_account || ''}`.trim(),
       created_at: p.created_at,
       status: p.status, // Include status for filtering

@@ -329,7 +329,7 @@ const WalletPage = () => {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(t => 
         t.description?.toLowerCase().includes(query) ||
-        t.contributor_name?.toLowerCase().includes(query) ||
+        t.spender_name?.toLowerCase().includes(query) ||
         t.title?.toLowerCase().includes(query) ||
         t.recipient_username?.toLowerCase().includes(query)
       );
@@ -780,11 +780,11 @@ const WalletPage = () => {
                                     {getStatusText(transaction.payout_status)}
                                   </Badge>
                                 ) : transaction.type === 'credit' ? (
-                                  transaction.contributor_name ? (
+                                  transaction.spender_name ? (
                                     <span className="text-gray-700">
-                                      {transaction.contributor_name.startsWith('@') 
-                                        ? transaction.contributor_name 
-                                        : `@${transaction.contributor_name}`}
+                                      {transaction.spender_name.startsWith('@') 
+                                        ? transaction.spender_name 
+                                        : `@${transaction.spender_name}`}
                                     </span>
                                   ) : (
                                     <span className="text-gray-400">—</span>
@@ -843,12 +843,12 @@ const WalletPage = () => {
                               <div className="font-medium text-gray-900 truncate">
                                 {transaction.title || transaction.description || 'Transaction'}
                               </div>
-                              {!transaction.is_payout && (transaction.contributor_name || getRecipientUsername(transaction)) && (
+                              {!transaction.is_payout && (transaction.spender_name || getRecipientUsername(transaction)) && (
                                 <div className="text-xs text-gray-600 mt-0.5">
                                   {transaction.type === 'credit' 
-                                    ? (transaction.contributor_name?.startsWith('@') 
-                                        ? transaction.contributor_name 
-                                        : `@${transaction.contributor_name}`)
+                                    ? (transaction.spender_name?.startsWith('@') 
+                                        ? transaction.spender_name 
+                                        : `@${transaction.spender_name}`)
                                     : `@${getRecipientUsername(transaction)}`
                                   }
                                 </div>

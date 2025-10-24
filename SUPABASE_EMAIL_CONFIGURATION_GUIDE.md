@@ -473,3 +473,5 @@ After completing this configuration:
 ---
 
 **🚀 Ready to fix your email verification? Follow this guide step by step!**
+
+

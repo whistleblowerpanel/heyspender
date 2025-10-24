@@ -7,9 +7,47 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import { updateAllSEOTags } from '@/lib/seoUtils';
 
 const AboutUsPage = () => {
   const router = useRouter();
+
+  // Set comprehensive SEO meta tags for about us page
+  useEffect(() => {
+    const seoData = {
+      title: 'About Us — HeySpender',
+      description: 'Learn about HeySpender\'s mission to make dreams come true, one goal at a time. Discover our values, team, and commitment to helping you create wishlist, cash goals and share.',
+      image: 'https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp',
+      url: 'https://heyspender.com/about-us',
+      keywords: 'about HeySpender, our mission, team, values, wishlist platform, cash goals, community, empathy, innovation, making dreams come true',
+      structuredData: {
+        "@context": "https://schema.org",
+        "@type": "AboutPage",
+        "name": "About HeySpender",
+        "description": "Learn about HeySpender's mission to make dreams come true, one goal at a time.",
+        "url": "https://heyspender.com/about-us",
+        "mainEntity": {
+          "@type": "Organization",
+          "name": "HeySpender",
+          "description": "A platform that helps people create wishlists and cash goals, share with friends, and receive support.",
+          "url": "https://heyspender.com",
+          "foundingDate": "2024",
+          "mission": "To make dreams come true, one goal at a time"
+        }
+      },
+      ogData: {
+        type: 'website',
+        site_name: 'HeySpender'
+      },
+      twitterData: {
+        card: 'summary_large_image',
+        site: '@heyspender',
+        creator: '@heyspender'
+      }
+    };
+    
+    updateAllSEOTags(seoData);
+  }, []);
 
   const stats = [
     { number: "10K+", label: "Happy Users" },
@@ -38,7 +76,7 @@ const AboutUsPage = () => {
       title: "Purpose Built",
       tag: "Our Drive",
       gradient: "from-brand-orange to-brand-accent-red",
-      description: "Every feature is designed with a clear purpose: to make wishlist creation, sharing, and contribution seamless for both creators and supporters."
+      description: "Every feature is designed with a clear purpose: to make wishlist creation, sharing, and contribution seamless for both Wishers and Spenders."
     },
     {
       icon: Zap,
@@ -64,7 +102,7 @@ const AboutUsPage = () => {
     {
       year: "2024 Q2",
       title: "Payment Integration",
-      description: "Added seamless payment processing with Paystack, Flutterwave, and Monnify, making contributions effortless for supporters."
+      description: "Added seamless payment processing with Paystack, Flutterwave, and Monnify, making contributions effortless for Spenders."
     },
     {
       year: "2024 Q3",

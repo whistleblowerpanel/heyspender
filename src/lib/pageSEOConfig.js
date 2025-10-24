@@ -120,7 +120,17 @@ export const getPageSEO = (pathname) => {
     return pageSEOConfig[pathname];
   }
 
-  // Handle dynamic routes (wishlist and profile pages)
+  // Handle dynamic routes (wishlist, profile, and item detail pages)
+  if (pathname.match(/^\/[^\/]+\/[^\/]+\/[^\/]+$/)) {
+    // This is an item detail page (username/slug/itemId)
+    return {
+      title: 'Wishlist Item — HeySpender',
+      description: 'Support this wishlist item on HeySpender! Help make dreams come true by contributing to this special gift.',
+      image: 'https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp',
+      keywords: 'wishlist item, gift, support, contribution, HeySpender'
+    };
+  }
+
   if (pathname.match(/^\/[^\/]+\/[^\/]+$/)) {
     // This is a wishlist page (username/slug)
     // For client-side rendering, we'll use generic metadata

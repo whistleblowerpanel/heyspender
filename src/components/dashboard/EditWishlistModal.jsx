@@ -227,7 +227,7 @@ const EditWishlistModal = ({ isOpen, onClose, wishlist, onSave }) => {
               id="edit-story"
               value={formData.story}
               onChange={(e) => setFormData(prev => ({ ...prev, story: e.target.value }))}
-              placeholder="Tell your supporters why this wishlist matters..."
+              placeholder="Tell your Spenders why this wishlist matters..."
               className="mt-2 min-h-[100px]"
             />
           </div>

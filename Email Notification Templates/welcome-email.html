@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to HeySpender - HeySpender</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Ubuntu, sans-serif;
+            background-color: #f5f5f5;
+            color: #171717;
+            line-height: 1.6;
+        }
+        
+        .email-wrapper {
+            width: 100%;
+            background-color: #f5f5f5;
+            padding: 20px 0;
+        }
+        
+        .email-container {
+            max-width: 424px;
+            margin: 0 auto;
+            background-color: #f5f5f5;
+        }
+        
+        /* Header with logo */
+        .header {
+            padding: 0 24px 24px 24px;
+            text-align: left;
+        }
+        
+        .logo {
+            width: 180px;
+            height: auto;
+            margin-top: 20px;
+        }
+        
+        /* Main content card */
+        .content-card {
+            background-color: #ffffff;
+            margin: 0 24px;
+            padding: 32px;
+        }
+        
+        /* Title section */
+        .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #171717;
+            line-height: 28px;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            font-weight: 400;
+            color: #171717;
+            line-height: 24px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        /* CTA Button */
+        .button-container {
+            margin: 24px 0 40px 0;
+        }
+        
+        .welcome-button {
+            display: block;
+            width: 100%;
+            background-color: #86E589;
+            color: #000000;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 56px;
+            text-align: center;
+            height: 56px;
+            border: none;
+        }
+        
+        .welcome-button:hover {
+            background-color: #7DD87F;
+        }
+        
+        /* Info sections */
+        .info-section {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+        
+        .info-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+        
+        .info-content {
+            flex: 1;
+        }
+        
+        .info-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #171717;
+            line-height: 20px;
+            margin-bottom: 2px;
+        }
+        
+        .info-text {
+            font-size: 14px;
+            font-weight: 400;
+            color: #707070;
+            line-height: 20px;
+        }
+        
+        .info-text a {
+            color: inherit;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        
+        .info-text a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Footer */
+        .footer {
+            padding: 32px 24px 64px 24px;
+            text-align: center;
+        }
+        
+        .footer-text {
+            font-size: 12px;
+            font-weight: 400;
+            color: #707070;
+            line-height: 16px;
+            margin-bottom: 8px;
+        }
+        
+        .footer-links {
+            margin-top: 16px;
+        }
+        
+        .footer-links a {
+            color: #707070;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 400;
+            margin-right: 16px;
+        }
+        
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Mobile responsiveness */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                max-width: 100%;
+            }
+            
+            .header,
+            .content-card,
+            .footer {
+                margin: 0 16px;
+                padding: 24px 16px;
+            }
+            
+            .content-card {
+                padding: 24px 16px;
+            }
+            
+            .title {
+                font-size: 16px;
+                line-height: 24px;
+            }
+            
+            .subtitle {
+                font-size: 14px;
+                line-height: 20px;
+            }
+            
+            .welcome-button {
+                font-size: 14px;
+                height: 48px;
+                line-height: 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="email-container">
+            <!-- Header with logo -->
+            <div class="header">
+                <img src="https://heyspender.com/HeySpenderLogooReverse.webp" alt="HeySpender" class="logo" />
+            </div>
+            
+            <!-- Main content card -->
+            <div class="content-card">
+                <!-- Title section -->
+                <div class="title">🎉 Welcome to HeySpender!</div>
+                <div class="subtitle">
+                    Hi {{ .FullName }}, we're thrilled to have you join our community of Wishers and Spenders.
+                </div>
+                
+                <!-- CTA Button -->
+                <div class="button-container">
+                    <a href="https://heyspender.com/dashboard" class="welcome-button">Get Started</a>
+                </div>
+                
+                <!-- Info sections -->
+                <div class="info-section">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwIDJMMTMuMDkgNi4yNkgxNi41TDEzLjUgMTAuNUwxNC41IDE1TDEwIDEyLjI1TDUuNSAxNUw2LjUgMTAuNUwzLjUgNi4yNkg2LjkxTDEwIDJaIiBzdHJva2U9IiMxNzE3MTciIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+" alt="Star icon" class="info-icon" />
+                    <div class="info-content">
+                        <div class="info-title">What's HeySpender?</div>
+                        <div class="info-text">
+                            A smart way to manage your wishlist and track your spendings goals. <a href="https://heyspender.com/about-us">Learn more</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwIDE4QzE0LjQxODEgMTggMTggMTQuNDE4MSAxOCAxMEMxOCA1LjU4MTcyIDE0LjQxODEgMiAxMCAyQzUuNTgxNzIgMiAyIDUuNTgxNzIgMiAxMEMyIDE0LjQxODEgNS41ODE3MiAxOCAxMCAxOFoiIHN0cm9rZT0iIzE3MTcxNyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8cGF0aCBkPSJNMTAgMTBWMTQiIHN0cm9rZT0iIzE3MTcxNyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8cGF0aCBkPSJNMTAgNlY2LjAxIiBzdHJva2U9IiMxNzE3MTciIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+" alt="Question icon" class="info-icon" />
+                    <div class="info-content">
+                        <div class="info-title">Need support?</div>
+                        <div class="info-text">
+                            For questions or concerns about your account, <a href="mailto:support@heyspender.com">contact HeySpender</a>.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="footer">
+                <div class="footer-text" style="color: #7c3bed; font-weight: 600;">HeyWisher. HeySpender.</div>
+                <div class="footer-text">
+                    One creates a wish. One makes it happen.
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -161,7 +161,7 @@ const ContributeModal = ({ goal, recipientEmail, onContributed, trigger }) => {
 
     // Get user info from context or session
     const currentUser = user || (hasValidSession ? await getCurrentSessionUser() : null);
-    const contributorEmail = currentUser?.email || 'anonymous@heyspender.com';
+    const spenderEmail = currentUser?.email || 'anonymous@heyspender.com';
 
     setIsProcessingPayment(true);
 
@@ -173,7 +173,7 @@ const ContributeModal = ({ goal, recipientEmail, onContributed, trigger }) => {
 
       // Initialize Paystack payment
       const paystackResponse = await initializePaystackPayment({
-        email: contributorEmail,
+        email: spenderEmail,
         amount: parsedAmount * 100, // Paystack expects amount in kobo
         currency: 'NGN',
         reference: paymentRef,
@@ -380,7 +380,7 @@ const ContributeModal = ({ goal, recipientEmail, onContributed, trigger }) => {
                 'Your contribution will help reach the goal. Secure payment powered by Paystack.' :
                 'Your contribution will help reach the goal. Secure payment powered by Paystack.'
               ) :
-              'Anyone can contribute to help reach this goal! No account required. Secure payment powered by Paystack.'
+              'Anyone can spend to help reach this goal! No account required. Secure payment powered by Paystack.'
             }
           </DialogDescription>
         </DialogHeader>

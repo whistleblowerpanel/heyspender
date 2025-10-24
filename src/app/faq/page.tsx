@@ -7,11 +7,59 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import { updateAllSEOTags } from '@/lib/seoUtils';
 
 const FAQPage = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [openIndex, setOpenIndex] = useState(null);
+
+  // Set comprehensive SEO meta tags for FAQ page
+  useEffect(() => {
+    const seoData = {
+      title: 'Frequently Asked Questions — HeySpender',
+      description: 'Find answers to common questions about HeySpender, wishlists, payments, and more. Get help with creating wishlist, cash goals and share, making contributions, and using our platform.',
+      image: 'https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp',
+      url: 'https://heyspender.com/faq',
+      keywords: 'FAQ, help, support, questions, wishlist help, payment help, HeySpender guide',
+      structuredData: {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "name": "HeySpender FAQ",
+        "description": "Frequently asked questions about HeySpender wishlist platform",
+        "url": "https://heyspender.com/faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is HeySpender?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "HeySpender is a wishlist platform that allows you to create and share wishlists for special occasions. Friends and family can view your wishlist and contribute money towards items you want, making gift-giving easier and more meaningful."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I create a wishlist?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Creating a wishlist is easy! Sign up for an account, click on 'Create Wishlist' in your dashboard, give it a title and occasion (like Birthday, Wedding, etc.), add items you want, and share the link with your HeySpenders."
+            }
+          }
+        ]
+      },
+      ogData: {
+        type: 'website',
+        site_name: 'HeySpender'
+      },
+      twitterData: {
+        card: 'summary_large_image',
+        site: '@heyspender',
+        creator: '@heyspender'
+      }
+    };
+    
+    updateAllSEOTags(seoData);
+  }, []);
 
   const categories = [
     {
@@ -25,7 +73,7 @@ const FAQPage = () => {
         },
         {
           question: "How do I create a wishlist?",
-          answer: "Creating a wishlist is easy! Sign up for an account, click on 'Create Wishlist' in your dashboard, give it a title and occasion (like Birthday, Wedding, etc.), add items you want, and share the link with your friends and family. You can add as many items as you like with descriptions, images, and prices."
+          answer: "Creating a wishlist is easy! Sign up for an account, click on 'Create Wishlist' in your dashboard, give it a title and occasion (like Birthday, Wedding, etc.), add items you want, and share the link with your HeySpenders. You can add as many items as you like with descriptions, images, and prices."
         },
         {
           question: "Is HeySpender free to use?",
@@ -83,11 +131,11 @@ const FAQPage = () => {
         },
         {
           question: "Can I see who contributed to my wishlist?",
-          answer: "Yes! In your dashboard, you can view all contributions including the contributor's name (if they chose to share it), amount, date, and which item they contributed towards. Some contributors may choose to remain anonymous."
+          answer: "Yes! In your dashboard, you can view all contributions including the Spender's name (if they chose to share it), amount, date, and which item they contributed towards. Some Spenders may choose to remain anonymous."
         },
         {
-          question: "Can contributors leave messages?",
-          answer: "Yes! When making a contribution, supporters can include a personal message or note which you'll see in your dashboard. It's a great way for them to send well wishes along with their gift."
+          question: "Can Spenders leave messages?",
+          answer: "Yes! When making a contribution, Spenders can include a personal message or note which you'll see in your dashboard. It's a great way for them to send well wishes along with their gift."
         }
       ]
     },

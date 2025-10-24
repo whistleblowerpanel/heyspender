@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Gift, Share2, Heart, Sparkles, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/SupabaseAuthContext';
 import CashGoalsSection from '@/components/CashGoalsSection';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import { updateAllSEOTags } from '@/lib/seoUtils';
 const FeatureCard = ({
   feature,
   index,
@@ -296,6 +297,45 @@ const HomePage = () => {
   const router = useRouter();
   const { user } = useAuth();
   const [flippedCardIndex, setFlippedCardIndex] = useState(null);
+  
+  // Set comprehensive SEO meta tags for homepage
+  useEffect(() => {
+    const seoData = {
+      title: 'HeySpender — Create & Share Wishlists & Cash Goals',
+      description: 'HeySpender lets you create wishlist, cash goals and share with Spender friends, and receive support. Organize your dreams and make it easy for people to contribute. Perfect for birthdays, weddings, graduations, and more.',
+      image: 'https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp',
+      url: 'https://heyspender.com',
+      keywords: 'wishlist, cash goals, gift registry, birthday gifts, wedding registry, graduation gifts, crowdfunding, contributions, Paystack, Flutterwave, Monnify',
+      structuredData: {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "HeySpender",
+        "description": "Create wishlists and cash goals, share with friends, and receive support. Perfect for birthdays, weddings, graduations, and more.",
+        "url": "https://heyspender.com",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://heyspender.com/explore?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "HeySpender",
+          "url": "https://heyspender.com"
+        }
+      },
+      ogData: {
+        type: 'website',
+        site_name: 'HeySpender'
+      },
+      twitterData: {
+        card: 'summary_large_image',
+        site: '@heyspender',
+        creator: '@heyspender'
+      }
+    };
+    
+    updateAllSEOTags(seoData);
+  }, []);
   
   const handleGetStarted = () => {
     if (user) {

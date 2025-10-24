@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Logo to Supabase</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #171717; margin-bottom: 20px; }
+        .step { margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px; }
+        .step h3 { color: #00d66f; margin-bottom: 10px; }
+        .code { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+        .button { background: #00d66f; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        .button:hover { background: #00c55e; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 4px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📸 Upload HeySpender Logo to Supabase</h1>
+        
+        <div class="step">
+            <h3>Step 1: Get Supabase Service Role Key</h3>
+            <p>Go to your Supabase dashboard → Settings → API → Copy the "service_role" key</p>
+        </div>
+        
+        <div class="step">
+            <h3>Step 2: Upload via Supabase Dashboard</h3>
+            <p>Go to Storage → HeySpender Media bucket → Upload the logo file</p>
+            <p>File path: <code>branding/heyspender-logo.webp</code></p>
+        </div>
+        
+        <div class="step">
+            <h3>Step 3: Get Public URL</h3>
+            <p>After uploading, right-click the file → Copy URL</p>
+            <p>The URL should look like:</p>
+            <div class="code">https://hgvdslcpndmimatvliyu.supabase.co/storage/v1/object/public/HeySpender%20Media/branding/heyspender-logo.webp</div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 4: Update Email Template</h3>
+            <p>Replace the logo URL in your email template with the Supabase URL</p>
+            <button class="button" onclick="copyTemplate()">Copy Updated Template</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function copyTemplate() {
+            const template = `<img src="https://hgvdslcpndmimatvliyu.supabase.co/storage/v1/object/public/HeySpender%20Media/branding/heyspender-logo.webp" alt="HeySpender" class="logo" />`;
+            
+            navigator.clipboard.writeText(template).then(() => {
+                document.getElementById('result').innerHTML = '<div class="success">✅ Template copied to clipboard! Replace the img src in your email template.</div>';
+            }).catch(err => {
+                document.getElementById('result').innerHTML = '<div class="success">❌ Failed to copy. Here's the template:<br><div class="code">' + template + '</div></div>';
+            });
+        }
+    </script>
+</body>
+</html>
