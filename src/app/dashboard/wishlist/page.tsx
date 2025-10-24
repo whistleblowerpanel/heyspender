@@ -251,11 +251,11 @@ const MyWishlistV2Page = () => {
 
   // Event handlers
   const handleGetStarted = () => {
-    router.push('/get-started');
+    router.push('/get-started?returnTo=/dashboard/wishlist');
   };
 
   const handleCreateWishlist = () => {
-    router.push('/get-started');
+    router.push('/get-started?returnTo=/dashboard/wishlist');
   };
 
   const handleOccasionSelect = (occasion) => {

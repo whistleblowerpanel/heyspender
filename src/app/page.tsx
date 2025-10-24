@@ -300,7 +300,7 @@ const HomePage = () => {
   
   const handleGetStarted = () => {
     // Always go to the same wizard - it will handle logged-in vs non-logged-in users
-    router.push('/get-started');
+    router.push('/get-started?returnTo=/');
   };
 
   const handleCardClick = (index) => {

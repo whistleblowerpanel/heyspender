@@ -287,8 +287,30 @@ const GetStartedContent = () => {
       // If returnTo is provided, navigate there
       router.push(returnTo);
     } else {
-      // Otherwise, go back to the previous page
-      router.back();
+      // Check if user came from dashboard or homepage
+      const referrer = document.referrer;
+      const currentOrigin = window.location.origin;
+      
+      // If referrer is from the same origin
+      if (referrer && referrer.startsWith(currentOrigin)) {
+        const referrerPath = referrer.replace(currentOrigin, '');
+        
+        // If user came from dashboard, go back to dashboard
+        if (referrerPath.startsWith('/dashboard')) {
+          router.push('/dashboard/wishlist');
+        } 
+        // If user came from homepage, go back to homepage
+        else if (referrerPath === '/' || referrerPath === '') {
+          router.push('/');
+        }
+        // For any other page, use browser back
+        else {
+          router.back();
+        }
+      } else {
+        // No referrer or external referrer, default to homepage
+        router.push('/');
+      }
     }
   };
 
