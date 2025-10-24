@@ -19,16 +19,16 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
 
     if (error || !wishlist) {
       return {
-        title: 'Wishlist Not Found — HeySpender',
+        title: 'HeySpender, Wishlist Not Found',
         description: 'The wishlist you are looking for does not exist or has been moved.',
         openGraph: {
-          title: 'Wishlist Not Found — HeySpender',
+          title: 'HeySpender, Wishlist Not Found',
           description: 'The wishlist you are looking for does not exist or has been moved.',
           images: ['https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp'],
         },
         twitter: {
           card: 'summary_large_image',
-          title: 'Wishlist Not Found — HeySpender',
+          title: 'HeySpender, Wishlist Not Found',
           description: 'The wishlist you are looking for does not exist or has been moved.',
           images: ['https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp'],
         },
@@ -38,23 +38,23 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
     // Check if user account is deactivated
     if (wishlist.user && wishlist.user.is_active === false) {
       return {
-        title: 'Wishlist Temporarily Unavailable — HeySpender',
+        title: `HeySpender, Check Out ${wishlist.title}'s Wishlist`,
         description: `${wishlist.user.full_name}'s wishlist is currently paused and temporarily unavailable.`,
         openGraph: {
-          title: 'Wishlist Temporarily Unavailable — HeySpender',
+          title: `HeySpender, Check Out ${wishlist.title}'s Wishlist`,
           description: `${wishlist.user.full_name}'s wishlist is currently paused and temporarily unavailable.`,
           images: ['https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp'],
         },
         twitter: {
           card: 'summary_large_image',
-          title: 'Wishlist Temporarily Unavailable — HeySpender',
+          title: `HeySpender, Check Out ${wishlist.title}'s Wishlist`,
           description: `${wishlist.user.full_name}'s wishlist is currently paused and temporarily unavailable.`,
           images: ['https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp'],
         },
       };
     }
 
-    const title = `${wishlist.title} — HeySpender`;
+    const title = `HeySpender, Check Out ${wishlist.title}'s Wishlist`;
     const description = wishlist.story || `Check out ${wishlist.user?.full_name || 'this user'}'s wishlist for their ${wishlist.occasion || 'special occasion'}! Support their dreams and make their wishes come true.`;
     const image = wishlist.cover_image_url || 'https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp';
     const url = `https://heyspender.com/${username}/${slug}`;
@@ -95,16 +95,16 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   } catch (error) {
     console.error('Error generating metadata:', error);
     return {
-      title: 'Wishlist — HeySpender',
+      title: 'HeySpender, Check Out This Wishlist',
       description: 'Check out this amazing wishlist on HeySpender! Support their dreams and make their wishes come true.',
       openGraph: {
-        title: 'Wishlist — HeySpender',
+        title: 'HeySpender, Check Out This Wishlist',
         description: 'Check out this amazing wishlist on HeySpender! Support their dreams and make their wishes come true.',
         images: ['https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp'],
       },
       twitter: {
         card: 'summary_large_image',
-        title: 'Wishlist — HeySpender',
+        title: 'HeySpender, Check Out This Wishlist',
         description: 'Check out this amazing wishlist on HeySpender! Support their dreams and make their wishes come true.',
         images: ['https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp'],
       },

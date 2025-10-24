@@ -7,59 +7,12 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { updateAllSEOTags } from '@/lib/seoUtils';
 
 const FAQPage = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [openIndex, setOpenIndex] = useState(null);
 
-  // Set comprehensive SEO meta tags for FAQ page
-  useEffect(() => {
-    const seoData = {
-      title: 'Frequently Asked Questions — HeySpender',
-      description: 'Find answers to common questions about HeySpender, wishlists, payments, and more. Get help with creating wishlist, cash goals and share, making contributions, and using our platform.',
-      image: 'https://heyspender.com/HeySpender%20Media/General/HeySpender%20Banner.webp',
-      url: 'https://heyspender.com/faq',
-      keywords: 'FAQ, help, support, questions, wishlist help, payment help, HeySpender guide',
-      structuredData: {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "name": "HeySpender FAQ",
-        "description": "Frequently asked questions about HeySpender wishlist platform",
-        "url": "https://heyspender.com/faq",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "What is HeySpender?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "HeySpender is a wishlist platform that allows you to create and share wishlists for special occasions. Friends and family can view your wishlist and contribute money towards items you want, making gift-giving easier and more meaningful."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "How do I create a wishlist?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Creating a wishlist is easy! Sign up for an account, click on 'Create Wishlist' in your dashboard, give it a title and occasion (like Birthday, Wedding, etc.), add items you want, and share the link with your HeySpenders."
-            }
-          }
-        ]
-      },
-      ogData: {
-        type: 'website',
-        site_name: 'HeySpender'
-      },
-      twitterData: {
-        card: 'summary_large_image',
-        site: '@heyspender',
-        creator: '@heyspender'
-      }
-    };
-    
-    updateAllSEOTags(seoData);
-  }, []);
 
   const categories = [
     {
