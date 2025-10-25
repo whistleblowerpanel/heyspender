@@ -29,6 +29,10 @@ const LoginPageContent = () => {
   
   // Get the page the user was trying to access before being redirected to login
   const returnTo = searchParams.get('returnTo');
+  const returnUrl = searchParams.get('returnUrl');
+  
+  // Use returnUrl if available, otherwise fall back to returnTo
+  const redirectUrl = returnUrl || returnTo;
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -85,16 +89,28 @@ const LoginPageContent = () => {
           .single();
         
         if (!roleError && userData?.role === 'admin') {
-          // Redirect admin users to admin dashboard
-          router.push('/admin/dashboard/users');
+          // Redirect admin users to their intended destination or admin dashboard
+          if (redirectUrl && redirectUrl.startsWith('/admin/')) {
+            router.push(redirectUrl);
+          } else {
+            router.push('/admin/dashboard/users');
+          }
         } else {
-          // Redirect regular users to wishlist dashboard
-          router.push('/dashboard/wishlist/');
+          // Redirect regular users to their intended destination or wishlist dashboard
+          if (redirectUrl && !redirectUrl.startsWith('/admin/')) {
+            router.push(redirectUrl);
+          } else {
+            router.push('/dashboard/wishlist/');
+          }
         }
       } catch (roleCheckError) {
         console.warn('Error checking user role, defaulting to user dashboard:', roleCheckError);
-        // Default to user dashboard if role check fails
-        router.push('/dashboard/wishlist/');
+        // Default to user dashboard if role check fails, but respect return URL if it's not admin
+        if (redirectUrl && !redirectUrl.startsWith('/admin/')) {
+          router.push(redirectUrl);
+        } else {
+          router.push('/dashboard/wishlist/');
+        }
       }
     }
     

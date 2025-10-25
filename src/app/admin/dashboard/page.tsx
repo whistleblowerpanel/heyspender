@@ -1691,16 +1691,6 @@ const AdminDashboardPage = () => {
             <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-2">
                 <h1 className="text-4xl font-bold text-brand-purple-dark">{currentPageTitle}</h1>
                 <div className="flex gap-2 w-full sm:w-auto">
-                  {activeTab === 'notifications' && (
-                    <Button 
-                      variant="custom" 
-                      className="bg-brand-green text-black w-full sm:w-auto" 
-                      onClick={() => createTemplateCallback && createTemplateCallback()}
-                    >
-                      <Plus className="h-4 w-4 mr-2"/>
-                      Create Template
-                    </Button>
-                  )}
                   <Button variant="custom" className="bg-brand-orange text-black w-full sm:w-auto" onClick={fetchData} disabled={loadingData}>
                       {loadingData ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : null}
                       Refresh Data
@@ -2245,7 +2235,7 @@ const AdminDashboardPage = () => {
             
             {activeTab === 'notifications' && (
               <div className="mt-1">
-                <AdminNotifications onCreateTemplate={setCreateTemplateCallback} />
+                <AdminNotifications />
               </div>
             )}
             

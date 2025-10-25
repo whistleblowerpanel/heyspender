@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
+import { EmailService } from '@/lib/emailService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,7 +28,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-const AdminNotifications = ({ onCreateTemplate }) => {
+const AdminNotifications = () => {
   const { toast } = useToast();
   
   // State
@@ -38,13 +39,10 @@ const AdminNotifications = ({ onCreateTemplate }) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
+  const [connectionError, setConnectionError] = useState(false);
+  const [tablesMissing, setTablesMissing] = useState(false);
 
-  // Expose create dialog trigger to parent
-  useEffect(() => {
-    if (onCreateTemplate) {
-      onCreateTemplate(() => setShowCreateDialog(true));
-    }
-  }, [onCreateTemplate]);
+  // Note: Removed callback mechanism to avoid setState during render issues
   
   // Form state
   const [formData, setFormData] = useState({
@@ -87,12 +85,25 @@ const AdminNotifications = ({ onCreateTemplate }) => {
       setNotifications(data || []);
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      // Don't show error toast if table doesn't exist
-      if (error.code !== 'PGRST205' && error.code !== '42P01') {
+      
+      // Handle different types of errors
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('ERR_NAME_NOT_RESOLVED')) {
+        setConnectionError(true);
+        toast({
+          variant: 'destructive',
+          title: 'Connection Error',
+          description: 'Unable to connect to database. Please check your internet connection and try again.'
+        });
+      } else if (error.code === 'PGRST205' || error.code === '42P01') {
+        // Table doesn't exist - this is expected for new installations
+        console.warn('notification_templates table does not exist yet. Please run the database migration.');
+        setTablesMissing(true);
+        setNotifications([]);
+      } else {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to load notifications'
+          description: 'Failed to load notifications: ' + (error.message || 'Unknown error')
         });
       }
     }
@@ -133,6 +144,21 @@ const AdminNotifications = ({ onCreateTemplate }) => {
       setReminders(data || []);
     } catch (error) {
       console.error('Error fetching reminders:', error);
+      
+      // Handle different types of errors
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('ERR_NAME_NOT_RESOLVED')) {
+        console.warn('Database connection failed for scheduled reminders');
+        setConnectionError(true);
+        setReminders([]);
+      } else if (error.code === 'PGRST205' || error.code === '42P01') {
+        // Table doesn't exist - this is expected for new installations
+        console.warn('scheduled_reminders table does not exist yet. Please run the database migration.');
+        setTablesMissing(true);
+        setReminders([]);
+      } else {
+        console.error('Unexpected error fetching reminders:', error);
+        setReminders([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -226,10 +252,141 @@ const AdminNotifications = ({ onCreateTemplate }) => {
 
   // Test send notification
   const handleTestSend = async (notification) => {
-    toast({
-      title: 'Test email sent',
-      description: 'Check your email inbox'
-    });
+    try {
+      // Get the first scheduled reminder to use as test data
+      const testReminder = reminders.find(r => r.claims?.wishlist_items?.wishlists?.users?.email === 'expresscreo@gmail.com');
+      
+      if (!testReminder) {
+        toast({
+          variant: 'destructive',
+          title: 'No test data found',
+          description: 'No scheduled reminder found for expresscreo@gmail.com'
+        });
+        return;
+      }
+
+      // Prepare email data with template variables
+      const emailData = {
+        to: 'expresscreo@gmail.com',
+        subject: notification.subject || 'Test Notification from HeySpender',
+        html: generateTestEmailHTML(notification, testReminder),
+        text: generateTestEmailText(notification, testReminder),
+        templateKey: 'admin_test_notification',
+        metadata: {
+          notificationId: notification.id,
+          testEmail: true,
+          reminderId: testReminder.id
+        }
+      };
+
+      // Send the email
+      const result = await EmailService.sendEmail(emailData);
+
+      if (result.success) {
+        toast({
+          title: 'Test email sent successfully!',
+          description: 'Check expresscreo@gmail.com inbox for the test notification'
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Failed to send test email',
+          description: result.error || 'Unknown error occurred'
+        });
+      }
+    } catch (error) {
+      console.error('Error sending test email:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error sending test email',
+        description: error.message || 'Unknown error occurred'
+      });
+    }
+  };
+
+  // Helper function to generate test email HTML
+  const generateTestEmailHTML = (notification, reminder) => {
+    const itemName = reminder.claims?.wishlist_items?.name || 'Test Item';
+    const wishlistOwner = reminder.claims?.wishlist_items?.wishlists?.users?.username || 'Test User';
+    const userEmail = reminder.claims?.wishlist_items?.wishlists?.users?.email || 'expresscreo@gmail.com';
+    
+    // Replace template variables in the notification body
+    let emailBody = notification.body || 'This is a test notification from HeySpender admin panel.';
+    emailBody = emailBody.replace(/\{user_name\}/g, 'Test User');
+    emailBody = emailBody.replace(/\{item_name\}/g, itemName);
+    emailBody = emailBody.replace(/\{days_left\}/g, '2');
+    emailBody = emailBody.replace(/\{wishlist_owner\}/g, wishlistOwner);
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Notification - HeySpender</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="text-align: center; margin-bottom: 30px;">
+    <h1 style="color: #161B47; margin-bottom: 10px;">📧 Test Notification</h1>
+    <p style="color: #666; font-size: 16px;">This is a test email from HeySpender Admin Panel</p>
+  </div>
+  
+  <div style="background-color: #f8f9fa; border-radius: 8px; padding: 25px; margin-bottom: 25px;">
+    <h2 style="color: #161B47; margin-bottom: 15px;">Template: ${notification.title}</h2>
+    <div style="white-space: pre-line; font-size: 16px; line-height: 1.6;">
+      ${emailBody}
+    </div>
+  </div>
+
+  <div style="background-color: #e8f4fd; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+    <h3 style="color: #161B47; margin-bottom: 10px;">Test Data Used:</h3>
+    <ul style="margin: 0; padding-left: 20px;">
+      <li><strong>User:</strong> Test User (${userEmail})</li>
+      <li><strong>Item:</strong> ${itemName}</li>
+      <li><strong>Wishlist Owner:</strong> ${wishlistOwner}</li>
+      <li><strong>Days Left:</strong> 2</li>
+    </ul>
+  </div>
+
+  <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+    <p style="color: #666; font-size: 14px;">
+      This is a test email sent from the HeySpender Admin Panel.<br>
+      Template ID: ${notification.id} | Sent at: ${new Date().toLocaleString()}
+    </p>
+  </div>
+</body>
+</html>`;
+  };
+
+  // Helper function to generate test email text
+  const generateTestEmailText = (notification, reminder) => {
+    const itemName = reminder.claims?.wishlist_items?.name || 'Test Item';
+    const wishlistOwner = reminder.claims?.wishlist_items?.wishlists?.users?.username || 'Test User';
+    
+    // Replace template variables in the notification body
+    let emailBody = notification.body || 'This is a test notification from HeySpender admin panel.';
+    emailBody = emailBody.replace(/\{user_name\}/g, 'Test User');
+    emailBody = emailBody.replace(/\{item_name\}/g, itemName);
+    emailBody = emailBody.replace(/\{days_left\}/g, '2');
+    emailBody = emailBody.replace(/\{wishlist_owner\}/g, wishlistOwner);
+
+    return `
+TEST NOTIFICATION - HeySpender Admin Panel
+
+Template: ${notification.title}
+
+${emailBody}
+
+Test Data Used:
+- User: Test User (expresscreo@gmail.com)
+- Item: ${itemName}
+- Wishlist Owner: ${wishlistOwner}
+- Days Left: 2
+
+This is a test email sent from the HeySpender Admin Panel.
+Template ID: ${notification.id}
+Sent at: ${new Date().toLocaleString()}
+`;
   };
 
   const resetForm = () => {
@@ -273,7 +430,56 @@ const AdminNotifications = ({ onCreateTemplate }) => {
 
   return (
     <div className="space-y-8">
+      {/* Connection Error Banner */}
+      {connectionError && (
+        <div className="border-2 border-red-500 bg-red-50 p-4 rounded-lg">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-red-600" />
+            <h3 className="font-bold text-red-800">Database Connection Error</h3>
+          </div>
+          <p className="text-red-700 mt-2">
+            Unable to connect to the database. This could be due to:
+          </p>
+          <ul className="text-red-700 mt-2 ml-4 list-disc">
+            <li>Internet connectivity issues</li>
+            <li>Supabase service being down</li>
+            <li>Incorrect database configuration</li>
+          </ul>
+          <p className="text-red-700 mt-2">
+            Please check your connection and try refreshing the page.
+          </p>
+        </div>
+      )}
+
+      {/* Missing Tables Banner */}
+      {tablesMissing && !connectionError && (
+        <div className="border-2 border-yellow-500 bg-yellow-50 p-4 rounded-lg">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-yellow-600" />
+            <h3 className="font-bold text-yellow-800">Database Setup Required</h3>
+          </div>
+          <p className="text-yellow-700 mt-2">
+            The notification system tables have not been created yet. To set up the notification system:
+          </p>
+          <ol className="text-yellow-700 mt-2 ml-4 list-decimal">
+            <li>Run the database migration: <code className="bg-yellow-100 px-1 rounded">supabase/migrations/002_notification_system.sql</code></li>
+            <li>Refresh this page after the migration is complete</li>
+          </ol>
+        </div>
+      )}
+
       {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-brand-purple-dark">Notifications Management</h2>
+        <Button 
+          onClick={() => setShowCreateDialog(true)}
+          className="bg-brand-green text-black border-2 border-black shadow-none hover:shadow-[-2px_2px_0px_#161B47] active:shadow-none"
+        >
+          <Plus className="h-4 w-4 mr-2"/>
+          Create Template
+        </Button>
+      </div>
+
       {/* Notification Templates Table */}
       <div className="border-2 border-black bg-white">
         <div className="p-4 border-b-2 border-black bg-brand-cream">

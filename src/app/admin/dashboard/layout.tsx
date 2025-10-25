@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import AdminDashboardLayout from '@/components/layout/AdminDashboardLayout';
+import { supabase } from '@/lib/customSupabaseClient';
 
 export default function AdminDashboardLayoutWrapper({
   children,
@@ -15,32 +16,57 @@ export default function AdminDashboardLayoutWrapper({
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [roleLoaded, setRoleLoaded] = React.useState(false);
+  const [userRole, setUserRole] = React.useState(null);
   const hasCheckedRef = React.useRef(false);
 
   useEffect(() => {
-    // Only run auth check when user state changes (not on every render)
-    if (!authLoading && user && user.user_metadata?.role) {
-      // User and role are both loaded
-      console.log('Admin layout: User and role loaded:', user.user_metadata.role);
-      setRoleLoaded(true);
-      hasCheckedRef.current = true;
-      
-      // Check if user is NOT admin
-      if (user.user_metadata.role !== 'admin') {
-        console.log('User is not admin, redirecting to user dashboard. Role:', user.user_metadata.role);
-        router.push('/dashboard/wishlist');
-      } else {
-        console.log('User is admin, rendering dashboard');
+    const checkUserRole = async () => {
+      if (!authLoading && user && !hasCheckedRef.current) {
+        hasCheckedRef.current = true;
+        console.log('Admin layout: Checking user role from database...');
+        
+        try {
+          const { data: userData, error: roleError } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          
+          if (roleError) {
+            console.error('Error fetching user role:', roleError);
+            // If there's an error fetching role, redirect to login with return URL
+            const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+            router.push(`/auth/login?returnUrl=${returnUrl}`);
+            return;
+          }
+          
+          const role = userData?.role;
+          setUserRole(role);
+          setRoleLoaded(true);
+          
+          console.log('Admin layout: User role loaded:', role);
+          
+          // Check if user is NOT admin
+          if (role !== 'admin') {
+            console.log('User is not admin, redirecting to user dashboard. Role:', role);
+            router.push('/dashboard/wishlist');
+          } else {
+            console.log('User is admin, rendering dashboard');
+          }
+        } catch (error) {
+          console.error('Error checking user role:', error);
+          const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+          router.push(`/auth/login?returnUrl=${returnUrl}`);
+        }
+      } else if (!authLoading && !user) {
+        // User is not logged in, redirect to login with return URL
+        console.log('Admin layout: User not logged in, redirecting to login');
+        const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+        router.push(`/auth/login?returnUrl=${returnUrl}`);
       }
-    } else if (!authLoading && user && !user.user_metadata?.role) {
-      // User loaded but role not yet - wait a bit longer
-      console.log('Admin layout: User loaded, waiting for role...');
-    } else if (!authLoading && !user && hasCheckedRef.current) {
-      // User was logged out after being logged in
-      console.log('Admin layout: User logged out, redirecting to login');
-      router.push('/auth/login');
-    }
-    // Don't redirect on initial load when user is null - might just be loading
+    };
+
+    checkUserRole();
   }, [user, authLoading, router]);
 
   // Show loading while auth is loading
@@ -59,7 +85,7 @@ export default function AdminDashboardLayoutWrapper({
 
   // Wait for role to be loaded before rendering admin dashboard
   // This prevents the redirect-on-refresh bug
-  if (!roleLoaded || !user.user_metadata?.role) {
+  if (!roleLoaded || !userRole) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-16 w-16 animate-spin text-brand-purple-dark" />
@@ -68,7 +94,7 @@ export default function AdminDashboardLayoutWrapper({
   }
 
   // If role is loaded but not admin, don't render (will redirect via useEffect)
-  if (user.user_metadata.role !== 'admin') {
+  if (userRole !== 'admin') {
     return null;
   }
 
